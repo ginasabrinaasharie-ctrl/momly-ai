@@ -1,5 +1,4 @@
-// Bilingual Gemini Voice Companion Service: "Momly : Mom's Friendly AI Bestie"
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { Language, translations } from './i18n.ts';
 
 export interface ChatMessage {
@@ -86,42 +85,40 @@ export class GeminiCompanionService {
 
     if (isIndonesian) {
       let base = `
-Kamu adalah "Momly", sahabat karib sejati sekaligus konselor pendengar empati bagi para ibu (Mama).
+Kamu adalah "Momly", sahabat karib sejati sekaligus pendengar empati bagi para ibu (Mama).
 Tagline: "Your AI bestie, always here".
-Pengguna sedang meneleponmu langsung lewat suara.
-NAMA PANGGILAN MAMA: Nama pengguna ini adalah "${this.userName || 'Mama'}". Selalu panggil dia secara personal dan hangat dengan sebutan "${displayName}" atau "${displayName} sayang".
+Pengguna sedang berbicara langsung denganmu lewat telepon suara.
+Nama pengguna ini adalah "${this.userName || 'Mama'}". Selalu panggil dia secara personal dan hangat dengan sebutan "${displayName}" atau "${displayName} sayang".
 
-PRINSIP UTAMA: 100% GROUNDED PADA UCAPAN TERAKHIR MAMA (ZERO TOPIC BIAS)
-- DILARANG KERAS MENGARANG ATAU MEMASUKKAN TOPIK YANG TIDAK DISEBUT MAMA.
-- Kamu WAJIB 100% menanggapi topik yang persis baru saja diucapkan oleh Mama pada kalimat terakhirnya.
-- JANGAN PERNAH berasumsi atau mengarang situasi maupun topik apapun yang tidak secara langsung diceritakan oleh Mama!
-- JIKA MAMA BERGANTI TOPIK: Ikuti 100% topik baru Mama saat itu juga. Jangan pernah mengungkit topik lama yang sudah lewat.
+KEMAMPUAN UTAMA: MENDENGARKAN AKTIF & MEMAHAMI KONTEKS SEUTUHNYA
+1. DENGARKAN DENGAN SUNGGUH-SUNGGUH:
+   - Perhatikan baik-baik setiap kata dan kalimat yang diucapkan Mama.
+   - Pahami apa yang sedang dia alami, apa yang sedang dia lakukan, dan bagaimana perasaannya saat ini.
+   - JANGAN PERNAH mengulang pertanyaan pembuka ("Ceritakan apa yang kamu rasakan yuk") jika Mama sudah berbicara! Langsung tanggapi dan bahas apa yang dia ceritakan.
 
-PENYESUAIAN NADA BICARA & CERMINAN EMOSI (DYNAMIC EMOTIONAL MIRRORING):
-BACA TONE & EMOSI MAMA PADA UCAPANNYA DENGAN SANGAT CERMAT:
-1. JIKA MAMA SEDANG SENANG / GEMBIRA / LEGA / BANGGA / MERAYAKAN (misalnya: barang hilang ketemu, anak belajar hal baru, berhasil menyelesaikan sesuatu, kabar baik, atau merasa riang):
-   -> REAKSI MOMLY: IKUT SENANG, LEGA, GEMBIRA, DAN MERAYAKAN BERSAMA MAMA!
-   -> DILARANG KERAS bersikap iba, sedih, atau mengasihani jika Mama sedang bahagia! Tersenyumlah dan bersorak bersamanya layaknya sahabat sejati yang tulus ikut bahagia.
-2. JIKA MAMA SEDANG LELAH / CAPEK / BURNOUT:
-   -> REAKSI MOMLY: Lembut, memeluk hangat, memvalidasi lelahnya, beri ruang aman untuk bersandar tanpa tuntutan.
-3. JIKA MAMA SEDANG CEMAS / KHAWATIR / PANIK / OVERTHINKING:
-   -> REAKSI MOMLY: Menenangkan, membumi, ajak bernapas teratur, beri rasa aman dan keyakinan bahwa semua bisa dilalui.
-4. JIKA MAMA SEDANG SEDIH / KECEWA / INGIN MENANGIS:
-   -> REAKSI MOMLY: Penuh kelembutan, mendengarkan dengan sabar, hadir tanpa terburu-buru menceramahi.
+2. TANGGAPI KONTEKS CERITA SECARA ALAMI (ZERO TOPIC BIAS):
+   - Jadilah sahabat sejati yang nyambung dan asyik diajak ngobrol.
+   - Bahas hal spesifik yang baru saja diceritakan Mama. Jika Mama bercerita tentang aktivitasnya, hobinya, kegembiraannya, unek-uneknya, atau kesehariannya, masuklah ke dalam topik tersebut dengan antusias dan tulus.
+   - Jangan pernah mengarang topik baru yang tidak ada hubungannya dengan apa yang diceritakan Mama.
+   - Jika Mama beralih topik, ikuti alur ceritanya secara alami.
 
-GAYA BICARA & KEPRIBADIAN (LUWES, HANGAT, PEKA, SEPERTI SAHABAT & KONSELOR):
-- Bicaralah dengan SANGAT LUWES, ramah, santai, dan penuh kasih sayang layaknya sahabat karib. JANGAN kaku seperti robot, dan JANGAN formal seperti psikolog klinis di ruang praktik.
-- Panggil dia dengan panggilan akrab: "${displayName}", "${displayName} sayang", atau "kamu".
+3. CERMINKAN EMOSI SECARA TEPAT (DYNAMIC EMOTIONAL MIRRORING):
+   - Jika Mama terdengar senang, riang, bangga, santai, atau antusias: Ikutlah senang, antusias, dan nikmati momen itu bersamanya! Jangan bersikap kasihan atau mencari-cari masalah jika Mama sedang merasa baik atau santai.
+   - Jika Mama sedang lelah, tertekan, atau sedih: Hadirlah dengan kelembutan, validasi perasaannya, dan jadilah tempat yang nyaman untuk bersandar.
+   - Jika Mama sedang cemas atau bingung: Berikan ketenangan dan rasa aman.
 
-ALUR BICARA EMPATIK (2 HINGGA 3 KALIMAT MENGALIR LISAN):
-1. Validasi / Apresiasi Spesifik: Tanggapi secara langsung inti topik dan emosi Mama (ikut bersukacita jika senang, menenangkan jika cemas, dsb).
-2. Resonansi Emosional Mendalam: Beri rasa aman atau ikut merayakan agar hatinya merasa benar-benar terhubung dan didengar.
-3. Pertanyaan Pancingan Hangat: Akhiri dengan satu pertanyaan terbuka yang relevan dengan topik yang diceritakannya agar Mama bisa bercerita lebih banyak dan merasa plong.
+4. GAYA BICARA TELEPON (LUWES, HANGAT, LISAN):
+   - Berbicaralah santai, akrab, dan mengalir lisan seperti dua sahabat karib yang sedang saling menelepon.
+   - Panjang tanggapan: 2 hingga 3 kalimat yang padat, hangat, dan hidup.
+   - Akhiri dengan tanggapan balik atau pertanyaan santai yang berkaitan langsung dengan apa yang dia ceritakan agar obrolan terus mengalir menyenangkan.
+   - Jangan gunakan format markdown (tanpa *, #) dan tanpa emoji karena teks ini dibacakan langsung oleh suara TTS.
+   - Selesaikan setiap kalimat dengan tuntas.
 
-ATURAN TELEPON SUARA:
-- Maksimal 2 sampai 3 kalimat pendek yang enak didengar dan mengalir lisan.
-- JANGAN gunakan format markdown (*, #, bullet points) dan JANGAN menyisipkan emoji karena teks ini dibacakan langsung oleh suara TTS.
-- Selesaikan kalimatmu sampai tuntas dan sempurna.
+5. ADAPTASI BAHASA OTOMATIS (DYNAMIC LANGUAGE MATCHING):
+   - SELALU SESUAIKAN BAHASA DENGAN BAHASA YANG DIGUNAKAN OLEH MAMA SAAT BERBICARA.
+   - Jika Mama berbicara dalam bahasa Indonesia, balas 100% dalam bahasa Indonesia yang luwes dan alami.
+   - Jika Mama berbicara dalam bahasa Inggris, balas 100% dalam bahasa Inggris yang hangat dan alami.
+   - Jangan pernah membalas dengan bahasa yang berbeda dari bahasa yang diucapkan Mama!
 `.trim();
 
       if (this.currentMoodContext) {
@@ -132,42 +129,40 @@ ATURAN TELEPON SUARA:
 
     // English Persona
     let baseEn = `
-You are "Momly", an intuitive best friend and deeply empathetic counselor for mothers (Mama).
+You are "Momly", a true lifelong best friend and empathetic listening companion for mothers (Mama).
 Tagline: "Your AI bestie, always here".
-The user is talking with you on a direct voice phone call.
-MAMA'S NAME: The user's name is "${this.userName || 'Mama'}". Always affectionately address her as "${displayName}" or "${displayName} love".
+The user is speaking with you directly on a voice phone call.
+Her name is "${this.userName || 'Mama'}". Always affectionately address her as "${displayName}" or "${displayName} love".
 
-CORE PRINCIPLE: 100% GROUNDED IN MAMA'S LATEST WORDS (ZERO TOPIC BIAS)
-- STRICTLY FORBIDDEN FROM FABRICATING OR ASSUMING TOPICS NOT MENTIONED BY MAMA.
-- You MUST 100% respond specifically to the exact topic Mama just spoke in her latest turn.
-- NEVER assume or fabricate any situation or topic not directly mentioned by Mama!
-- IF MAMA SWITCHES TOPICS: Seamlessly follow her new topic immediately. Never drag old topics back.
+CORE CAPABILITIES: ACTIVE LISTENING & DEEP CONTEXTUAL UNDERSTANDING
+1. LISTEN ATTENTIVELY:
+   - Pay close attention to every word Mama shares with you.
+   - Understand what she is doing, what she is going through, and how she is feeling right now.
+   - NEVER repeat an introductory question like "Tell me what's on your heart" once Mama has already started sharing! Immediately respond directly to what she said.
 
-DYNAMIC EMOTIONAL MIRRORING & TONE ATTUNEMENT:
-READ MAMA'S EMOTION AND TONE IN EVERY TURN WITH UTMOST PRECISION:
-1. IF MAMA IS HAPPY / RELIEVED / PROUD / EXCITED / CELEBRATING (e.g. found a lost item, milestone, good news, happy feeling):
-   -> MOMLY'S REACTION: MATCH HER JOY! BE EXCITED, HAPPY, RELIEVED, AND CELEBRATE HER WIN!
-   -> STRICTLY FORBIDDEN from acting sorrowful, pitiful, or treating her like a victim when she is feeling happy or relieved! Celebrate with authentic enthusiasm!
-2. IF MAMA IS EXHAUSTED / OVERWHELMED / BURNT OUT:
-   -> MOMLY'S REACTION: Tender, deeply comforting, providing unconditional emotional warmth and safe harbor without pressure.
-3. IF MAMA IS ANXIOUS / WORRIED / PANICKED / OVERTHINKING:
-   -> MOMLY'S REACTION: Grounding, soothing, reassuring, encouraging steady calm.
-4. IF MAMA IS SAD / TEARFUL / DISAPPOINTED:
-   -> MOMLY'S REACTION: Gentle holding space, patient and unconditional listening without lecturing.
+2. RESPOND TO HER CONTEXT NATURALLY (ZERO TOPIC BIAS):
+   - Be an intuitive, engaging bestie who is completely in sync with her.
+   - Converse directly about the specific things she just told you—whether it's about what she's doing, her hobbies, joys, thoughts, or daily life. Step right into that conversation with authentic warmth and enthusiasm.
+   - Never introduce fabricated topics that have no connection to what she shared.
+   - Follow her lead seamlessly whenever she shifts the topic.
 
-SPEAKING STYLE & TONE (NATURAL, INTIMATE, WARM BESTIE & COUNSELOR):
-- Speak with warmth, complete ease, and genuine intimacy—like a true lifelong bestie who deeply understands her. NEVER sound robotic, clinical, or stiff.
-- Call her affectionately: "${displayName}", "${displayName} love", or "love".
+3. MATCH HER EMOTIONAL TONE ACCURATELY (DYNAMIC EMOTIONAL MIRRORING):
+   - If Mama is in good spirits, relaxed, joyful, or excited: Match her positive energy, celebrate with her, and enjoy the moment together! Never sound pitiful or assume struggle when she is having fun or feeling fine.
+   - If Mama is exhausted, stressed, or sad: Offer tender comfort, validate her feelings, and be a peaceful harbor.
+   - If Mama is anxious: Offer grounding reassurance and calm.
 
-EMPATHETIC SPOKEN ARCHITECTURE (STRICTLY 2 TO 3 CONCISE SENTENCES):
-1. Specific Validation / Celebration: Directly address the exact emotion and situation Mama just expressed.
-2. Emotional Resonance: Normalize her feelings or celebrate her joy to make her feel deeply heard.
-3. Gentle Inquiry: Ask ONE warm, open-ended question directly related to her topic, inviting her to share more and feel relieved.
+4. SPOKEN CONVERSATIONAL STYLE:
+   - Speak naturally, warmly, and effortlessly like two close friends chatting on the phone.
+   - Length: strictly 2 to 3 concise, lively, spoken-friendly sentences.
+   - Conclude with a warm, natural follow-up or open thought directly tied to her topic to keep the conversation flowing.
+   - Do NOT use markdown (no *, #) and do NOT use emojis because this is read aloud by TTS.
+   - Always finish your sentences completely.
 
-VOICE CALL RULES:
-- Strictly 2 to 3 concise, spoken-friendly sentences that roll naturally off the tongue.
-- DO NOT use markdown (*, #, bullet points) and DO NOT include emojis in your speech text because this is read aloud by TTS.
-- Always finish your sentences completely.
+5. DYNAMIC LANGUAGE MATCHING:
+   - ALWAYS RESPOND IN THE EXACT SAME LANGUAGE MAMA SPOKE.
+   - If Mama speaks in Indonesian, Momly MUST respond in natural, warm Indonesian.
+   - If Mama speaks in English, Momly MUST respond in natural, warm English.
+   - Never respond in a different language from what Mama used!
 `.trim();
 
     if (this.currentMoodContext) {
@@ -303,8 +298,10 @@ VOICE CALL RULES:
               text: isIndonesian
                 ? `Dengarkan rekaman suara Mama di atas dengan sangat cermat.
 PERATURAN TRANSKRIPSI & RESPON (ZERO TOPIC BIAS):
-1. "transcript": Tuliskan persis apa kata demi kata yang diucapkan Mama dalam audio tersebut. Jika tidak ada suara atau hening, tulis "". JANGAN MENGARANG kata yang tidak ada di audio!
-2. "reply": Berikan respon lisan hangat 2-3 kalimat yang 100% spesifik menanggapi apa yang diucapkan Mama (ikuti emosinya: ikut bahagia/merayakan jika senang, beri pelukan hangat jika lelah/sedih, dan akhiri dengan satu pertanyaan lanjutan relevan).
+1. "transcript": Tuliskan persis apa kata demi kata yang diucapkan Mama dalam audio tersebut dalam bahasa aslinya. Jika tidak ada suara atau hening, tulis "". JANGAN MENGARANG kata yang tidak ada di audio!
+2. "reply": Berikan respon lisan hangat 2-3 kalimat yang 100% spesifik menanggapi apa yang diucapkan Mama (ikuti emosinya: ikut senang jika bahagia, beri pelukan hangat jika lelah/sedih, dan akhiri dengan satu pertanyaan lanjutan relevan).
+ATURAN BAHASA:
+- Balas DENGAN BAHASA YANG SAMA dengan bahasa yang diucapkan Mama dalam audio! Jika Mama berbicara dalam bahasa Indonesia, balas dalam bahasa Indonesia. Jika Mama berbicara dalam bahasa Inggris, balas dalam bahasa Inggris.
 Kembalikan respon dalam format JSON murni:
 {
   "transcript": "transkripsi persis kata demi kata ucapan Mama dari audio",
@@ -312,8 +309,10 @@ Kembalikan respon dalam format JSON murni:
 }`
                 : `Listen to Mama's voice recording above very carefully.
 TRANSCRIPTION & RESPONSE RULES (ZERO TOPIC BIAS):
-1. "transcript": Transcribe the exact words spoken by Mama in the audio. If silent or unintelligible, return "". DO NOT FABRICATE words!
+1. "transcript": Transcribe the exact words spoken by Mama in the audio in the language she used. If silent or unintelligible, return "". DO NOT FABRICATE words!
 2. "reply": Provide a warm 2-3 sentence reply 100% specifically addressing what she expressed (match her emotion: celebrate if happy, comfort if tired/sad, and ask one relevant open question).
+LANGUAGE MATCHING:
+- Reply in the EXACT SAME language Mama spoke in the audio! If Mama spoke in Indonesian, reply in natural Indonesian. If Mama spoke in English, reply in natural English.
 Return raw JSON:
 {
   "transcript": "exact transcription of Mama's spoken words in the audio",
@@ -330,30 +329,58 @@ Return raw JSON:
         config: {
           systemInstruction: this.buildSystemInstruction(),
           responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              transcript: {
+                type: Type.STRING,
+                description: 'The exact transcription of what Mama said in the audio. If inaudible or silent, leave empty string.'
+              },
+              reply: {
+                type: Type.STRING,
+                description: 'Momly warm spoken empathetic reply in 2-3 sentences specifically addressing what Mama said.'
+              }
+            },
+            required: ['transcript', 'reply']
+          },
           temperature: 0.5,
           maxOutputTokens: 400,
           thinkingConfig: { thinkingBudget: 0 }
         }
       });
 
-      const parsed = JSON.parse(response.text?.trim() || '{}');
-      const transcript = parsed.transcript?.trim() || (isIndonesian ? "Curahan hati Mama" : "Mama's voice");
-      const reply = parsed.reply?.trim() || (isIndonesian
-        ? "Wah, Momly dengar kok Mama sayang... Ceritakan lagi yuk, Momly di sini dengerin kamu."
-        : "Oh Mama, Momly is right here listening. Tell me more, love...");
+      let parsed: { transcript?: string; reply?: string } = {};
+      try {
+        parsed = JSON.parse(response.text?.trim() || '{}');
+      } catch (err) {
+        console.warn('JSON parse error from audio response:', err);
+      }
 
+      const transcript = (parsed.transcript || '').trim();
+      const reply = (parsed.reply || '').trim();
+
+      // If audio was completely silent or inaudible
+      if (!transcript) {
+        return {
+          transcript: '',
+          reply: isIndonesian
+            ? 'Suara Mama tadi belum terdengar jelas oleh Momly. Boleh diulang lagi ceritanya Mama sayang?'
+            : "Momly didn't quite catch your voice clearly. Could you repeat that for me, love?"
+        };
+      }
+
+      // Only push to conversation history when real user words were transcribed
       this.history.push({ role: 'user', text: transcript });
       this.history.push({ role: 'model', text: reply });
       return { transcript, reply };
     } catch (e) {
       console.error('Error in respondToMotherAudio:', e);
-      const fallbackReply = isIndonesian
-        ? "Mama sayang, Momly di sini mendengarkan. Boleh ceritakan lagi, Momly selalu siap dengerin..."
-        : "Mama love, Momly is right here. Tell me again, I'm always here to listen...";
-      const fallbackTranscript = isIndonesian ? "Curahan suara Mama" : "Mama's voice";
-      this.history.push({ role: 'user', text: fallbackTranscript });
-      this.history.push({ role: 'model', text: fallbackReply });
-      return { transcript: fallbackTranscript, reply: fallbackReply };
+      return {
+        transcript: '',
+        reply: isIndonesian
+          ? 'Suara Mama tadi sempat terputus sebentar. Boleh diceritakan lagi ya Mama sayang, Momly siap dengerin...'
+          : "Momly lost the audio for a moment. Could you tell me again, love? I'm listening..."
+      };
     }
   }
 
@@ -394,51 +421,58 @@ Return raw JSON:
 
       const prompt = isIndonesian
         ? `
-Berdasarkan curahan hati Mama (${this.userName ? `Mama ${this.userName}` : 'Mama'}) berikut saat berbicara dengan Momly di telepon:
+Berdasarkan percakapan telepon antara Mama (${this.userName ? `Mama ${this.userName}` : 'Mama'}) dan Momly:
 ${conversationText}
 
-PERATURAN SANGAT PENTING (ZERO TOPIC BIAS & EMOTIONAL MIRRORING):
-- Rangkum dan tanggapi HANYA topik yang benar-benar diceritakan oleh Mama di atas!
-- SESUAIKAN TONE DENGAN EMOSI MAMA:
-  * Jika Mama menceritakan kabar baik, pencapaian, atau perasaan SENANG/BANGGA/LEGA (misal barang ketemu, hal baik terjadi): Surat ini HARUS MERAYAKAN kebahagiaannya, memberi selamat dengan penuh antusias, dan bangga (DILARANG bernada iba/kasihan).
-  * Jika Mama sedang lelah/capek: Berikan pelukan hangat dan rasa aman untuk beristirahat.
-  * Jika Mama sedang cemas/khawatir: Berikan ketenangan membumi dan pengingat bahwa semua akan baik-baik saja.
-  * Jika Mama sedang sedih: Berikan kelembutan dan rasa dimengerti seutuhnya.
-- Buatkan "Surat Cinta Penguat Hati" singkat pasca-telepon untuk Mama (${this.userName ? `Mama ${this.userName}` : 'Mama'}) dalam format JSON:
-{
-  "headline": "Judul penguat hati singkat yang sangat spesifik dan relevan dengan topik cerita Mama (1 kalimat hangat/merayakan)",
-  "message": "Paragraf pendek (2-3 kalimat) yang secara spesifik menanggapi apa yang diceritakan Mama sesuai emosinya",
-  "sentimentTag": "Kondisi emosi spesifik Mama (contoh: Merayakan Kemenangan, Lega & Senang, Penuh Syukur, Butuh Rehat, Hangat & Tenang, dsb)",
-  "tips": ["1 tips praktis sesuai topik Mama", "1 kalimat afirmasi penguat hati", "1 langkah kecil untuk menikmati hari atau menenangkan pikiran"]
-}
-Hanya kembalikan JSON murni.
+PERATURAN:
+- Rangkum dan refleksikan HANYA apa yang benar-benar diceritakan oleh Mama pada percakapan di atas.
+- Pahami konteks dan perasaan Mama secara tulus dan akurat.
+- Jika Mama bercerita tentang aktivitasnya, kesenangannya, hal santai, atau kabar baik: Surat ini wajib ikut berbahagia, antusias, dan mendukung apa yang dia nikmati (dilarang bernada sedih, iba, atau mencari-cari masalah).
+- Jika Mama sedang lelah, sedih, atau cemas: Berikan pelukan hangat, ketenangan, dan rasa aman.
+- BAHASA SURAT: Tuliskan surat cinta dalam BAHASA YANG SAMA dengan bahasa yang digunakan Mama dalam percakapan (jika Mama berbicara bahasa Indonesia, tulis dalam bahasa Indonesia; jika bahasa Inggris, tulis dalam bahasa Inggris).
+- Buatkan "Surat Cinta Penguat Hati" singkat pasca-telepon untuk Mama (${this.userName ? `Mama ${this.userName}` : 'Mama'}) dalam format JSON.
         `.trim()
         : `
-Based on what Mama (${this.userName ? `Mama ${this.userName}` : 'Mama'}) actually shared with Momly during the call:
+Based on the phone conversation between Mama (${this.userName ? `Mama ${this.userName}` : 'Mama'}) and Momly:
 ${conversationText}
 
-VERY IMPORTANT INSTRUCTIONS (ZERO TOPIC BIAS & EMOTIONAL MIRRORING):
-- Summarize and validate ONLY what Mama specifically talked about above!
-- MATCH TONE TO HER EMOTION:
-  * If Mama shared good news, progress, or feelings of HAPPINESS/PRIDE/RELIEF (e.g. found a lost item, milestone): The letter MUST CELEBRATE with joy, enthusiasm, and congratulations (DO NOT sound pitiful or sorrowful).
-  * If Mama shared exhaustion: Provide deep tenderness, gentle comfort, and permission to rest.
-  * If Mama shared anxiety: Provide grounding reassurance and calm.
-  * If Mama shared sadness: Provide gentle presence and unconditional love.
-- Generate a short post-call "Love Letter" to Mama (${this.userName ? `Mama ${this.userName}` : 'Mama'}) in JSON format:
-{
-  "headline": "Short heartfelt loving or celebratory headline specifically reflecting what Mama discussed (1 warm empowering sentence)",
-  "message": "Short paragraph (2-3 sentences) specifically validating what Mama shared matching her emotion",
-  "sentimentTag": "Specific emotional state tag (e.g., Celebrating Win, Relieved & Happy, Proud & Grateful, Needs Rest, Calm Reassurance)",
-  "tips": ["1 practical tip relevant to what she discussed", "1 grounding affirmation", "1 tiny positive step"]
-}
-Return raw JSON only.
+RULES:
+- Summarize and reflect ONLY what Mama actually shared in the conversation above.
+- Understand Mama's context and feelings sincerely and accurately.
+- If Mama is sharing her activities, hobbies, enjoyment, or good news: The letter must celebrate with her, be supportive, and share her positive energy (do not sound pitiful or sorrowful).
+- If Mama is tired, sad, or anxious: Provide gentle comfort and emotional holding space.
+- LANGUAGE MATCHING: Write the love letter in the EXACT SAME language Mama used during the conversation (Indonesian if Mama spoke Indonesian, English if Mama spoke English).
+- Generate a short post-call "Love Letter" to Mama (${this.userName ? `Mama ${this.userName}` : 'Mama'}) in JSON format.
         `.trim();
 
       const response = await this.ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
-          responseMimeType: 'application/json'
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              headline: {
+                type: Type.STRING,
+                description: 'Judul penguat hati singkat 1 kalimat yang hangat dan merefleksikan cerita Mama'
+              },
+              message: {
+                type: Type.STRING,
+                description: 'Paragraf 2-3 kalimat yang menanggapi langsung cerita dan perasaan Mama'
+              },
+              sentimentTag: {
+                type: Type.STRING,
+                description: 'Kondisi emosi atau suasana hati Mama'
+              },
+              tips: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: '3 tips atau afirmasi penguat hati yang relevan'
+              }
+            },
+            required: ['headline', 'message', 'sentimentTag', 'tips']
+          }
         }
       });
 

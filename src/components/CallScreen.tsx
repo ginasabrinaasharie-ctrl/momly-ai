@@ -191,6 +191,13 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang }) => {
         if (transcript) {
           speechTextRef.current = transcript;
           setLatestUserText(transcript);
+        } else {
+          setMicNotice(
+            lang === 'id'
+              ? '🎙️ Suara belum tertangkap jelas. Yuk coba bicara lebih dekat...'
+              : "🎙️ Mic didn't catch your voice clearly. Please try speaking closer..."
+          );
+          setTimeout(() => setMicNotice(''), 4500);
         }
         setLatestModelText(reply);
 

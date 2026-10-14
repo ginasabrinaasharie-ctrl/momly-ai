@@ -481,7 +481,9 @@ class SpeechService {
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
-      const isIndonesian = this.currentLang === 'id';
+      // Intelligently detect language from spoken text so voice accent matches words
+      const hasIndonesianWords = /\b(aku|kamu|mama|lagi|bisa|banget|senang|cerita|bikin|aplikasi|nonton|kok|ya|dan|yang|di|ini|itu|dong|nggak|enggak|udah|yuk|sama|kan|hati|wah|hai|halo|capek|lelah|tenang|peluk)\b/i.test(text);
+      const isIndonesian = this.currentLang === 'id' || hasIndonesianWords;
 
       utterance.lang = isIndonesian ? 'id-ID' : 'en-US';
       utterance.rate = 0.92;
