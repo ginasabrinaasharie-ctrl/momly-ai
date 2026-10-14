@@ -4,9 +4,9 @@ import {
   Wind,
   MessageCircleHeart,
   Globe,
-  Heart,
   BookHeart,
   Mail,
+  LogOut,
 } from 'lucide-react';
 import { CallScreen } from './components/CallScreen.tsx';
 import { EmpathySummaryModal } from './components/EmpathySummaryModal.tsx';
@@ -73,6 +73,14 @@ export function App() {
     setUserName(user.name);
     setShowAuthModal(false);
     geminiCompanion.setUserName(user.name);
+  };
+
+  const handleLogout = () => {
+    usageGuard.logout();
+    setCurrentUser(null);
+    setUserName('');
+    localStorage.removeItem('momly_user_name');
+    setShowAuthModal(true);
   };
 
   // Sync language & userName with services
@@ -235,7 +243,7 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* User Nickname / Judge Pill */}
+            {/* User Profile / Judge Pill */}
             <button
               onClick={() => setShowAuthModal(true)}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-semibold transition-all cursor-pointer shadow-2xs ${
@@ -245,17 +253,31 @@ export function App() {
               }`}
               title={
                 currentUser?.role === 'judge'
-                  ? (lang === 'id' ? 'Akses Juri AI Builder Cup (Klik untuk ganti profil)' : 'AI Builder Cup Judge Pass (Click to switch)')
-                  : (lang === 'id' ? 'Ubah Profil' : 'Edit Profile')
+                  ? (lang === 'id' ? 'Akses Juri AI Builder Cup' : 'AI Builder Cup Judge Pass')
+                  : (lang === 'id' ? 'Profil Akun' : 'Account Profile')
               }
             >
-              <span className="text-[11px]">{currentUser?.role === 'judge' ? '⭐' : '💕'}</span>
-              <span className="font-bold text-[11px] max-w-[105px] truncate">
+              <span className="text-[11px]">{currentUser?.role === 'judge' ? '⭐' : '👤'}</span>
+              <span className="font-bold text-[11px] max-w-[90px] truncate">
                 {currentUser?.role === 'judge'
                   ? (lang === 'id' ? 'Mode Juri' : 'Judge Mode')
-                  : (userName ? `Mama ${userName}` : (lang === 'id' ? '+ Nama' : '+ Name'))}
+                  : (userName ? userName : (lang === 'id' ? 'Masuk' : 'Sign In'))}
               </span>
             </button>
+
+            {/* Direct Log Out Button */}
+            {currentUser && (
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition-all cursor-pointer shadow-2xs shrink-0"
+                title={lang === 'id' ? 'Keluar dari Akun (Log Out)' : 'Log Out'}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-bold hidden sm:inline">
+                  {lang === 'id' ? 'Keluar' : 'Logout'}
+                </span>
+              </button>
+            )}
 
             {/* Language Switcher Pill */}
             <button
@@ -350,89 +372,6 @@ export function App() {
                 <span className="text-[10px] text-slate-400 mt-0.5">
                   {t.callButtonSubtext}
                 </span>
-              </div>
-            </div>
-
-            {/* "Let's take a moment" 4 Action Cards matching Screen 04 */}
-            <div className="w-full mt-4 text-left">
-              <p className="text-[11px] font-bold text-[#6B5FA0] uppercase tracking-wider mb-2.5">
-                {lang === 'id' ? 'Mari Ambil Waktu Sejenak' : "Let's take a moment"}
-              </p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {/* 1. Talk to Momly */}
-                <button
-                  onClick={startCall}
-                  className="p-3 rounded-2xl bg-gradient-to-br from-[#FDDDDB]/60 to-[#FFF8F2] border border-[#FDDDDB] hover:shadow-xs active:scale-98 transition-all text-left flex items-start gap-2.5 cursor-pointer"
-                >
-                  <div className="w-8 h-8 rounded-full bg-[#F07B6B]/15 text-[#F07B6B] flex items-center justify-center shrink-0">
-                    <Phone className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#1C1228]">
-                      {lang === 'id' ? 'Bicara ke Momly' : 'Talk to Momly'}
-                    </p>
-                    <p className="text-[10px] text-slate-500">
-                      {lang === 'id' ? 'Suara & curhat' : 'Voice companion'}
-                    </p>
-                  </div>
-                </button>
-
-                {/* 2. Mood Check-in */}
-                <button
-                  onClick={() => {
-                    const el = document.getElementById('mood-section');
-                    el?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="p-3 rounded-2xl bg-gradient-to-br from-[#EEE8FF]/70 to-[#FFF8F2] border border-[#EEE8FF] hover:shadow-xs active:scale-98 transition-all text-left flex items-start gap-2.5 cursor-pointer"
-                >
-                  <div className="w-8 h-8 rounded-full bg-[#6B5FA0]/15 text-[#6B5FA0] flex items-center justify-center shrink-0">
-                    <Heart className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#1C1228]">
-                      {lang === 'id' ? 'Mood Check-in' : 'Mood Check-in'}
-                    </p>
-                    <p className="text-[10px] text-slate-500">
-                      {lang === 'id' ? 'Bagaimana rasanya?' : 'How do you feel?'}
-                    </p>
-                  </div>
-                </button>
-
-                {/* 3. Breathing Exercise */}
-                <button
-                  onClick={() => setShowBreathingModal(true)}
-                  className="p-3 rounded-2xl bg-gradient-to-br from-[#E6F4EA] to-[#FFF8F2] border border-[#CEEAD6] hover:shadow-xs active:scale-98 transition-all text-left flex items-start gap-2.5 cursor-pointer"
-                >
-                  <div className="w-8 h-8 rounded-full bg-emerald-600/15 text-emerald-600 flex items-center justify-center shrink-0">
-                    <Wind className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#1C1228]">
-                      {lang === 'id' ? 'Latihan Nafas' : 'Breathing Reset'}
-                    </p>
-                    <p className="text-[10px] text-slate-500">
-                      {lang === 'id' ? 'Tenangkan pikiran' : 'Calm your mind'}
-                    </p>
-                  </div>
-                </button>
-
-                {/* 4. My Journal */}
-                <button
-                  onClick={() => setActiveTab('journal')}
-                  className="p-3 rounded-2xl bg-gradient-to-br from-[#FFF3E0] to-[#FFF8F2] border border-[#FFE0B2] hover:shadow-xs active:scale-98 transition-all text-left flex items-start gap-2.5 cursor-pointer"
-                >
-                  <div className="w-8 h-8 rounded-full bg-amber-600/15 text-amber-600 flex items-center justify-center shrink-0">
-                    <BookHeart className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-[#1C1228]">
-                      {lang === 'id' ? 'Jurnal Hati' : 'Heart Journal'}
-                    </p>
-                    <p className="text-[10px] text-slate-500">
-                      {lang === 'id' ? 'Syukur & kemenangan' : 'Gratitude & wins'}
-                    </p>
-                  </div>
-                </button>
               </div>
             </div>
           </main>
@@ -616,7 +555,10 @@ export function App() {
         {/* AI Builder Cup Authentication & Judge Gate Modal */}
         <AuthModal
           isOpen={showAuthModal}
+          currentUser={currentUser}
           onSuccess={handleAuthSuccess}
+          onLogout={handleLogout}
+          onClose={() => setShowAuthModal(false)}
           lang={lang}
           onSelectLang={handleSelectLang}
         />
