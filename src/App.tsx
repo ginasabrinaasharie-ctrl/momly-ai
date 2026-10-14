@@ -232,21 +232,21 @@ export function App() {
       <div className="w-full max-w-md min-h-screen sm:min-h-[844px] bg-[#FDFCFF] sm:rounded-[40px] shadow-2xl sm:border sm:border-[#FDDDD8] overflow-hidden flex flex-col relative select-none">
         
         {/* Top Mobile App Header */}
-        <header className="w-full border-b border-[#FDDDD8]/80 bg-white/95 backdrop-blur-md sticky top-0 z-40 px-4 py-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 shrink-0">
+        <header className="w-full border-b border-[#FDDDD8]/80 bg-white/95 backdrop-blur-md sticky top-0 z-40 px-3 py-2.5 flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0 min-w-0">
             <MomlyAvatar size="sm" pose="winking" />
             <img
               src="/assets/momly/logo.png"
               alt="Momly - Your AI bestie, always here"
-              className="h-8 sm:h-9 w-auto object-contain shrink-0"
+              className="h-7 sm:h-8 w-auto object-contain shrink-0"
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* User Profile / Judge Pill */}
             <button
               onClick={() => setShowAuthModal(true)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-semibold transition-all cursor-pointer shadow-2xs ${
+              className={`inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-full border text-[11px] font-semibold transition-all cursor-pointer shadow-2xs max-w-[110px] sm:max-w-none ${
                 currentUser?.role === 'judge'
                   ? 'border-amber-400 bg-amber-50 text-amber-900 hover:bg-amber-100 ring-2 ring-amber-300/40'
                   : 'border-[#FDDDD8] bg-[#FFF8F2] hover:bg-[#FDDDD8]/50 text-[#1C1228]'
@@ -257,8 +257,8 @@ export function App() {
                   : (lang === 'id' ? 'Profil Akun' : 'Account Profile')
               }
             >
-              <span className="text-[11px]">{currentUser?.role === 'judge' ? '⭐' : '👤'}</span>
-              <span className="font-bold text-[11px] max-w-[90px] truncate">
+              <span className="text-[10px] shrink-0">{currentUser?.role === 'judge' ? '⭐' : '👤'}</span>
+              <span className="font-bold text-[10px] sm:text-[11px] truncate">
                 {currentUser?.role === 'judge'
                   ? (lang === 'id' ? 'Mode Juri' : 'Judge Mode')
                   : (userName ? userName : (lang === 'id' ? 'Masuk' : 'Sign In'))}
@@ -269,11 +269,11 @@ export function App() {
             {currentUser && (
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition-all cursor-pointer shadow-2xs shrink-0"
+                className="inline-flex items-center justify-center p-1.5 sm:px-2.5 sm:py-1.5 rounded-full border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition-all cursor-pointer shadow-2xs shrink-0"
                 title={lang === 'id' ? 'Keluar dari Akun (Log Out)' : 'Log Out'}
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span className="text-[10px] font-bold hidden sm:inline">
+                <span className="text-[10px] font-bold hidden sm:inline ml-1">
                   {lang === 'id' ? 'Keluar' : 'Logout'}
                 </span>
               </button>
@@ -282,11 +282,11 @@ export function App() {
             {/* Language Switcher Pill */}
             <button
               onClick={() => setShowLanguageModal(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#FDDDD8] bg-[#FDDDD8]/40 hover:bg-[#FDDDD8]/70 text-xs font-semibold text-[#F07B6B] transition-all cursor-pointer shadow-2xs shrink-0"
+              className="inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-full border border-[#FDDDD8] bg-[#FDDDD8]/40 hover:bg-[#FDDDD8]/70 text-[10px] sm:text-[11px] font-semibold text-[#F07B6B] transition-all cursor-pointer shadow-2xs shrink-0"
               title="Switch Language"
             >
-              <Globe className="w-3.5 h-3.5" />
-              <span className="uppercase text-[11px] font-bold">
+              <Globe className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+              <span className="uppercase font-bold tracking-tight">
                 {lang === 'en' ? '🇺🇸 EN' : '🇮🇩 ID'}
               </span>
             </button>
