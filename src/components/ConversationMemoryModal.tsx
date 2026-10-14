@@ -1,5 +1,4 @@
-import React from 'react';
-import { X, Trash2, Calendar, BookOpen } from 'lucide-react';
+import { X, Trash2, Calendar } from 'lucide-react';
 import { Language, translations } from '../services/i18n.ts';
 
 export interface StoredMemory {
@@ -28,7 +27,7 @@ export const ConversationMemoryModal: React.FC<ConversationMemoryModalProps> = (
 }) => {
   if (!isOpen) return null;
 
-  const t = translations[lang].journal;
+  const t = translations[lang].letters;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C1228]/70 backdrop-blur-md animate-in fade-in duration-200">
@@ -44,7 +43,7 @@ export const ConversationMemoryModal: React.FC<ConversationMemoryModalProps> = (
         {/* Modal Header */}
         <div className="flex items-center gap-2.5 mb-3">
           <div className="w-9 h-9 rounded-2xl bg-[#FDDDD8] text-[#F07B6B] flex items-center justify-center shrink-0 shadow-xs">
-            <BookOpen className="w-4 h-4" />
+            💌
           </div>
           <div>
             <h3 className="text-sm sm:text-base font-bold text-[#1C1228]">

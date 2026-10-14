@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import {
   Phone,
   Wind,
-  BookOpen,
   MessageCircleHeart,
   Globe,
   Heart,
   BookHeart,
+  Mail,
 } from 'lucide-react';
 import { CallScreen } from './components/CallScreen.tsx';
 import { EmpathySummaryModal } from './components/EmpathySummaryModal.tsx';
@@ -16,6 +16,8 @@ import {
   ConversationMemoryModal,
   StoredMemory,
 } from './components/ConversationMemoryModal.tsx';
+import { HeartJournalView } from './components/HeartJournalView.tsx';
+import { LettersView } from './components/LettersView.tsx';
 import { LanguageSelectModal } from './components/LanguageSelectModal.tsx';
 import { UserOnboardingModal } from './components/UserOnboardingModal.tsx';
 import { MomlyAvatar } from './components/MomlyAvatar.tsx';
@@ -24,6 +26,7 @@ import { geminiCompanion } from './services/geminiVoiceCompanion.ts';
 import { speechService } from './services/speechService.ts';
 import { usageGuard, AuthUser } from './services/usageGuard.ts';
 import { Language, translations } from './services/i18n.ts';
+import { JournalEntry } from './types/journal.ts';
 
 export function App() {
   // Language state (default to English as requested)
@@ -32,7 +35,7 @@ export function App() {
     return (saved as Language) || 'en';
   });
 
-  const [activeTab, setActiveTab] = useState<'home' | 'breathe' | 'journal'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'breathe' | 'journal' | 'letters'>('home');
   const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   // User Profile Name State
@@ -91,6 +94,54 @@ export function App() {
       console.warn('Failed to load memories:', e);
     }
   }, []);
+
+  // Heart Journal state and persistence
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem('momly_heart_journal');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.warn('Failed to load journal entries:', e);
+      return [];
+    }
+  });
+
+  const handleAddJournalEntry = (entry: JournalEntry) => {
+    setJournalEntries((prev) => {
+      const updated = [entry, ...prev];
+      try {
+        localStorage.setItem('momly_heart_journal', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Failed to save journal entry to localStorage:', e);
+      }
+      return updated;
+    });
+  };
+
+  const handleDeleteJournalEntry = (id: string) => {
+    setJournalEntries((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      try {
+        localStorage.setItem('momly_heart_journal', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Failed to update journal entries in localStorage:', e);
+      }
+      return updated;
+    });
+  };
+
+  const handleClearAllJournalEntries = () => {
+    if (
+      window.confirm(
+        lang === 'id'
+          ? 'Apakah Mama yakin ingin menghapus semua catatan jurnal?'
+          : 'Are you sure you want to clear all journal entries?'
+      )
+    ) {
+      setJournalEntries([]);
+      localStorage.removeItem('momly_heart_journal');
+    }
+  };
 
   const handleSelectLang = (newLang: Language) => {
     setLang(newLang);
@@ -375,10 +426,10 @@ export function App() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-[#1C1228]">
-                      {lang === 'id' ? 'Surat Cinta' : 'Heart Journal'}
+                      {lang === 'id' ? 'Jurnal Hati' : 'Heart Journal'}
                     </p>
                     <p className="text-[10px] text-slate-500">
-                      {lang === 'id' ? 'Refleksi & memori' : 'Reflect & grow'}
+                      {lang === 'id' ? 'Syukur & kemenangan' : 'Gratitude & wins'}
                     </p>
                   </div>
                 </button>
@@ -414,75 +465,32 @@ export function App() {
           </main>
         )}
 
-        {/* Tab 3: Journal (Heart Journal View) */}
+        {/* Tab 3: Journal (Heart Journal View - Gratitude & Micro-Wins) */}
         {activeTab === 'journal' && (
-          <main className="flex-1 px-4 py-6 flex flex-col text-left overflow-y-auto pb-24">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-bold text-[#1C1228]">{t.journal.title}</h2>
-                <p className="text-[11px] text-[#8B7FA0]">{t.journal.subtitle}</p>
-              </div>
-              {memories.length > 0 && (
-                <button
-                  onClick={handleClearMemories}
-                  className="text-[11px] text-rose-500 hover:text-rose-700 cursor-pointer"
-                >
-                  {t.journal.clearAll}
-                </button>
-              )}
-            </div>
-
-            {memories.length === 0 ? (
-              <div className="my-auto py-12 text-center space-y-2">
-                <div className="w-12 h-12 mx-auto rounded-full bg-[#EEE8FF] text-[#9B8EC4] flex items-center justify-center text-xl">
-                  💌
-                </div>
-                <p className="text-xs font-bold text-slate-700">{t.journal.emptyTitle}</p>
-                <p className="text-[11px] text-[#8B7FA0] max-w-xs mx-auto">
-                  {t.journal.emptyDesc}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {memories.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3.5 rounded-2xl bg-gradient-to-b from-[#FDFCFF] to-[#F8F5FF] border border-[#EEE8FF] shadow-xs"
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#FDDDD8] text-[#F07B6B]">
-                        {item.sentimentTag}
-                      </span>
-                      <span className="text-[10px] text-[#8B7FA0]">{item.timestamp}</span>
-                    </div>
-
-                    <h4 className="text-xs font-bold text-[#1C1228] mb-1">
-                      {item.headline}
-                    </h4>
-
-                    <p className="text-[11px] text-slate-600 italic bg-white/80 p-2.5 rounded-xl border border-slate-100 mb-2 leading-relaxed">
-                      "{item.message}"
-                    </p>
-
-                    {item.tips && item.tips.length > 0 && (
-                      <ul className="text-[10px] text-slate-600 space-y-0.5 list-disc list-inside">
-                        {item.tips.map((tipText, idx) => (
-                          <li key={idx}>{tipText}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </main>
+          <HeartJournalView
+            entries={journalEntries}
+            onAddEntry={handleAddJournalEntry}
+            onDeleteEntry={handleDeleteJournalEntry}
+            onClearAll={handleClearAllJournalEntries}
+            lang={lang}
+          />
         )}
 
-        {/* Mobile App Bottom Navigation Bar */}
-        <nav className="w-full bg-white/95 backdrop-blur-md border-t border-[#FDDDD8]/80 py-2 px-6 flex items-center justify-around absolute bottom-0 left-0 right-0 z-30">
+        {/* Tab 4: Letters (Surat Cinta dari Momly - Post-Call Summaries) */}
+        {activeTab === 'letters' && (
+          <LettersView
+            memories={memories}
+            onClearMemories={handleClearMemories}
+            lang={lang}
+          />
+        )}
+
+        {/* Mobile App Bottom Navigation Bar (4 Clean Tabs: Curhat, Jeda, Jurnal, Surat) */}
+        <nav className="w-full bg-white/95 backdrop-blur-md border-t border-[#FDDDD8]/80 py-2 px-3 flex items-center justify-around absolute bottom-0 left-0 right-0 z-30">
+          {/* Tab 1: Curhat (Home) */}
           <button
             onClick={() => setActiveTab('home')}
-            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer px-2 ${
               activeTab === 'home' ? 'text-[#F07B6B]' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
@@ -490,9 +498,10 @@ export function App() {
             <span className="text-[10px] font-bold">{t.bottomNav.home}</span>
           </button>
 
+          {/* Tab 2: Jeda (Breathe) */}
           <button
             onClick={() => setActiveTab('breathe')}
-            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer ${
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer px-2 ${
               activeTab === 'breathe' ? 'text-[#6B5FA0]' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
@@ -500,21 +509,40 @@ export function App() {
             <span className="text-[10px] font-bold">{t.bottomNav.breathe}</span>
           </button>
 
+          {/* Tab 3: Jurnal (Gratitude & Wins) */}
           <button
             onClick={() => setActiveTab('journal')}
-            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer relative ${
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer px-2 relative ${
               activeTab === 'journal' ? 'text-[#F07B6B]' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
             <div className="relative">
-              <BookOpen className="w-5 h-5" />
-              {memories.length > 0 && (
+              <BookHeart className="w-5 h-5" />
+              {journalEntries.length > 0 && (
                 <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-[#F07B6B] text-white text-[8px] flex items-center justify-center font-bold">
-                  {memories.length}
+                  {journalEntries.length}
                 </span>
               )}
             </div>
             <span className="text-[10px] font-bold">{t.bottomNav.journal}</span>
+          </button>
+
+          {/* Tab 4: Surat (Love Letters from Call Memory) */}
+          <button
+            onClick={() => setActiveTab('letters')}
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer px-2 relative ${
+              activeTab === 'letters' ? 'text-[#6B5FA0]' : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <div className="relative">
+              <Mail className="w-5 h-5" />
+              {memories.length > 0 && (
+                <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-[#6B5FA0] text-white text-[8px] flex items-center justify-center font-bold">
+                  {memories.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] font-bold">{t.bottomNav.letters}</span>
           </button>
         </nav>
 
@@ -590,6 +618,7 @@ export function App() {
           isOpen={showAuthModal}
           onSuccess={handleAuthSuccess}
           lang={lang}
+          onSelectLang={handleSelectLang}
         />
       </div>
     </div>

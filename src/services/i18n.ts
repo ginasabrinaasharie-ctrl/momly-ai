@@ -50,6 +50,42 @@ export interface Translations {
   journal: {
     title: string;
     subtitle: string;
+    newEntryButton: string;
+    emptyTitle: string;
+    emptyDesc: string;
+    clearAll: string;
+    modalTitle: string;
+    modalSubtitle: string;
+    modeQuickTitle: string;
+    modeQuickBadge: string;
+    modeQuickDesc: string;
+    modeVoiceTitle: string;
+    modeVoiceBadge: string;
+    modeVoiceDesc: string;
+    modeTextTitle: string;
+    modeTextBadge: string;
+    modeTextDesc: string;
+    gratitudeLabel: string;
+    gratitudePlaceholder: string;
+    winsLabel: string;
+    winsPlaceholder: string;
+    quickGratitudeChips: string[];
+    quickWinsChips: string[];
+    voiceTapToRecord: string;
+    voiceRecording: string;
+    voiceStop: string;
+    voiceProcessing: string;
+    voiceSpokenNote: string;
+    saveButton: string;
+    savingButton: string;
+    aiNoteTitle: string;
+    gratitudeSection: string;
+    winsSection: string;
+    toastSaved: string;
+  };
+  letters: {
+    title: string;
+    subtitle: string;
     emptyTitle: string;
     emptyDesc: string;
     reminderTitle: string;
@@ -76,6 +112,7 @@ export interface Translations {
     home: string;
     breathe: string;
     journal: string;
+    letters: string;
   };
   languageModal: {
     title: string;
@@ -105,6 +142,13 @@ export const translations: Record<Language, Translations> = {
     moodBadge: 'Daily Check-in',
     momlyWhisper: "Momly's Whisper:",
     moods: [
+      {
+        id: 'happy',
+        emoji: '🥰',
+        label: 'Happy',
+        subtitle: 'Warm heart & smiling',
+        note: 'So wonderful to see you shining, Mama! Tell Momly all about the beautiful moments making your day shine.',
+      },
       {
         id: 'exhausted',
         emoji: '🥱',
@@ -168,12 +212,62 @@ export const translations: Record<Language, Translations> = {
       generatingMessage: 'Momly is writing a personalized Love Letter for you...',
     },
     journal: {
-      title: 'Heart Journal & Memory',
-      subtitle: 'Momly remembers your journey so conversations stay warm and continuous.',
-      emptyTitle: 'No Entries Yet',
-      emptyDesc: 'After each call with Momly, your gentle reflections and love letters will be saved here.',
-      reminderTitle: 'Gentle Reminders:',
-      clearAll: 'Clear All Entries',
+      title: 'Heart Journal',
+      subtitle: 'Gather your daily gratitude & celebrate your little wins.',
+      newEntryButton: '+ Log Today’s Moments',
+      emptyTitle: 'Your Journal is Fresh & Clean',
+      emptyDesc: 'No entries yet. Take a gentle minute to record a sweet moment or a tiny victory today, Mama.',
+      clearAll: 'Clear All Journals',
+      modalTitle: 'Mama’s Heart Journal',
+      modalSubtitle: 'Pick the method that best matches your energy right now',
+      modeQuickTitle: 'Quick Tap',
+      modeQuickBadge: '10 Seconds',
+      modeQuickDesc: 'Exhausted or short on time? Just tap pre-made moments without typing a single word.',
+      modeVoiceTitle: 'Voice Log',
+      modeVoiceBadge: 'Hands-Free',
+      modeVoiceDesc: 'Holding or feeding your baby? Just speak naturally, and Momly will organize your sweet moments.',
+      modeTextTitle: 'Reflective Write',
+      modeTextBadge: 'Quiet Me-Time',
+      modeTextDesc: 'Baby is sleeping and the room is quiet? Write down your gratitude and personal wins at your own pace.',
+      gratitudeLabel: '🌻 What I’m Grateful For Today',
+      gratitudePlaceholder: 'e.g. Sipped my coffee warm, baby took a peaceful nap...',
+      winsLabel: '🏆 My Little Win Today',
+      winsPlaceholder: 'e.g. Kept my cool during a tantrum, took a soothing shower...',
+      quickGratitudeChips: [
+        '☕ Warm Drink',
+        '👶 Peaceful Baby Nap',
+        '☀️ Bright Sunshine',
+        '🤝 Partner / Family Support',
+        '🌿 A Deep Calming Breath',
+        '🍲 Delicious Meal'
+      ],
+      quickWinsChips: [
+        '🧘 Kept My Patience',
+        '🛁 Unhurried Shower',
+        '💧 Drank Water Today',
+        '🛋️ Rested for 10 Mins',
+        '💪 Got Through a Hard Day',
+        '🧸 Tidied up a bit'
+      ],
+      voiceTapToRecord: 'Tap to Start Speaking',
+      voiceRecording: 'Momly is listening... Tell me about your sweet moments or little wins',
+      voiceStop: 'Done Speaking',
+      voiceProcessing: 'Momly is sorting your precious moments...',
+      voiceSpokenNote: 'What you spoke:',
+      saveButton: 'Save & Receive Momly’s Hug 🌸',
+      savingButton: 'Momly is preparing a warm note...',
+      aiNoteTitle: 'Warm Hug from Momly',
+      gratitudeSection: 'Grateful For',
+      winsSection: 'Little Wins',
+      toastSaved: 'Journal saved with love 🌸',
+    },
+    letters: {
+      title: 'Love Letters from Momly',
+      subtitle: 'Warm reflections and loving reminders from your voice conversations with Momly.',
+      emptyTitle: 'No Letters Yet',
+      emptyDesc: 'Whenever you finish talking with Momly, your personalized love letter and caring tips will appear here.',
+      reminderTitle: 'Loving Reminder:',
+      clearAll: 'Clear All Letters',
       close: 'Close',
     },
     breathing: {
@@ -194,9 +288,10 @@ export const translations: Record<Language, Translations> = {
       quote: '"Sometimes all we need is to pause, breathe, and remember we are okay."',
     },
     bottomNav: {
-      home: 'Companion',
-      breathe: 'Breathe',
+      home: 'Talk',
+      breathe: 'Pause',
       journal: 'Journal',
+      letters: 'Letters',
     },
     languageModal: {
       title: 'Choose Your Language',
@@ -224,6 +319,13 @@ export const translations: Record<Language, Translations> = {
     moodBadge: 'Check-in Harian',
     momlyWhisper: 'Bisikan Momly:',
     moods: [
+      {
+        id: 'happy',
+        emoji: '🥰',
+        label: 'Senang',
+        subtitle: 'Hati hangat & tersenyum',
+        note: 'Senang sekali melihat Mama tersenyum hari ini! Ceritakan hal indah apa yang membuat harimu bersinar.',
+      },
       {
         id: 'exhausted',
         emoji: '🥱',
@@ -287,12 +389,62 @@ export const translations: Record<Language, Translations> = {
       generatingMessage: 'Momly sedang menuliskan Surat Cinta untukmu...',
     },
     journal: {
-      title: 'Jurnal Hati & Memory',
-      subtitle: 'Momly mengingat riwayat perasaanmu agar obrolan selalu tersambung hangat.',
-      emptyTitle: 'Belum Ada Riwayat',
-      emptyDesc: 'Setelah selesai menelepon Momly, rangkuman refleksi dan surat cintamu akan tersimpan di sini.',
+      title: 'Jurnal Hati',
+      subtitle: 'Kumpulkan rasa syukur & rayakan kemenangan kecilmu setiap hari.',
+      newEntryButton: '+ Catat Momen Hari Ini',
+      emptyTitle: 'Buku Jurnalmu Masih Rapi',
+      emptyDesc: 'Belum ada catatan hari ini. Luangkan 1 menit untuk mencatat hal manis atau kemenangan kecilmu, Mama.',
+      clearAll: 'Hapus Semua Jurnal',
+      modalTitle: 'Jurnal Hati Mama',
+      modalSubtitle: 'Pilih cara mencatat yang paling nyaman dengan energimu saat ini',
+      modeQuickTitle: 'Tinggal Pilih',
+      modeQuickBadge: '10 Detik',
+      modeQuickDesc: 'Lagi buru-buru atau ngantuk? Cukup sentuh kata-kata yang mewakili harimu tanpa perlu ngetik.',
+      modeVoiceTitle: 'Tinggal Cerita',
+      modeVoiceBadge: 'Sambil Momong',
+      modeVoiceDesc: 'Tangan lagi repot gendong bayi? Tekan tombol dan ngomong santai, biar Momly yang rangkumkan.',
+      modeTextTitle: 'Tulis Santai',
+      modeTextBadge: 'Waktu Tenang',
+      modeTextDesc: 'Si kecil sudah tidur dan suasana hening? Tuliskan rasa syukur dan kebanggaan kecilmu dengan tenang.',
+      gratitudeLabel: '🌻 Hal yang Kusyukuri Hari Ini',
+      gratitudePlaceholder: 'Contoh: Kopi pagi sempat diminum hangat, anak tidur siang nyenyak...',
+      winsLabel: '🏆 Kemenangan Kecilku Hari Ini',
+      winsPlaceholder: 'Contoh: Berhasil tahan sabar saat susu tumpah, sempat mandi tanpa buru-buru...',
+      quickGratitudeChips: [
+        '☕ Kopi/Teh Hangat',
+        '👶 Bayi Tidur Pules',
+        '☀️ Cuaca Cerah',
+        '🤝 Bantuan Suami/Keluarga',
+        '🌿 Nafas Lebih Lega',
+        '🍲 Makanan Enak'
+      ],
+      quickWinsChips: [
+        '🧘 Berhasil Nahan Sabar',
+        '🛁 Mandi Tanpa Terburu',
+        '💧 Minum 2L Air',
+        '🛋️ Sempat Rebahan 10 Menit',
+        '💪 Melewati Hari Berat',
+        '🧸 Rapikan Mainan Sedikit'
+      ],
+      voiceTapToRecord: 'Tekan untuk Mulai Cerita',
+      voiceRecording: 'Momly sedang mendengarkan... Ceritakan hal manis atau kemenangan harimu',
+      voiceStop: 'Selesai Bercerita',
+      voiceProcessing: 'Momly sedang merangkum poin indahmu...',
+      voiceSpokenNote: 'Cerita yang kamu ucapkan:',
+      saveButton: 'Simpan & Dapatkan Peluk Momly 🌸',
+      savingButton: 'Momly sedang menyiapkan pelukan...',
+      aiNoteTitle: 'Pelukan Hangat dari Momly',
+      gratitudeSection: 'Hal yang Disyukuri',
+      winsSection: 'Kemenangan Kecil',
+      toastSaved: 'Jurnal berhasil disimpan dengan cinta 🌸',
+    },
+    letters: {
+      title: 'Surat Cinta dari Momly',
+      subtitle: 'Rangkuman hangat dan pengingat kasih dari setiap obrolan suara kita.',
+      emptyTitle: 'Belum Ada Surat Cinta',
+      emptyDesc: 'Setelah selesai curhat dengan Momly, rangkuman refleksi dan surat cintamu akan tersimpan di sini.',
       reminderTitle: 'Pengingat Kasih:',
-      clearAll: 'Hapus Semua Riwayat',
+      clearAll: 'Hapus Semua Surat',
       close: 'Tutup',
     },
     breathing: {
@@ -313,9 +465,10 @@ export const translations: Record<Language, Translations> = {
       quote: '"Kadang yang kita butuhkan hanyalah berhenti sejenak, bernafas, dan merasa didengar."',
     },
     bottomNav: {
-      home: 'Sahabat',
-      breathe: 'Nafas',
+      home: 'Curhat',
+      breathe: 'Jeda',
       journal: 'Jurnal',
+      letters: 'Surat',
     },
     languageModal: {
       title: 'Pilih Bahasa Obrolan',

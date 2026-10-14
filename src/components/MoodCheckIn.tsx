@@ -42,7 +42,7 @@ export const MoodCheckIn: React.FC<MoodCheckInProps> = ({
       </p>
 
       {/* Mood Selector Buttons */}
-      <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mb-3">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 sm:gap-2 mb-3">
         {t.moods.map((mood) => {
           const isSelected = selectedMood?.id === mood.id;
           return (

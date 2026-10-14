@@ -507,6 +507,129 @@ RULES:
       };
     }
   }
+
+  public async processJournalEntry({
+    inputMethod,
+    rawText,
+    gratitudeItems,
+    microWinItems,
+  }: {
+    inputMethod: 'quick' | 'voice' | 'text';
+    rawText?: string;
+    gratitudeItems?: string[];
+    microWinItems?: string[];
+  }): Promise<{
+    gratitude: string[];
+    microWins: string[];
+    aiValidationNote: string;
+  }> {
+    const isIndonesian = this.language === 'id';
+    const targetName = this.userName
+      ? isIndonesian
+        ? `Mama ${this.userName}`
+        : this.userName
+      : isIndonesian
+      ? 'Mama'
+      : 'Mama';
+
+    let extractedGratitude =
+      gratitudeItems && gratitudeItems.length > 0
+        ? gratitudeItems
+        : [isIndonesian ? 'Momen tenang dan nafas lega hari ini' : 'A peaceful moment today'];
+    let extractedWins =
+      microWinItems && microWinItems.length > 0
+        ? microWinItems
+        : [isIndonesian ? 'Melewati hari dengan penuh ketegaran' : 'Got through the day with strength'];
+    const fallbackValidation = isIndonesian
+      ? `${targetName}, terima kasih sudah merawat rasa syukur hari ini. Langkah kecilmu begitu berharga, peluk hangat dari Momly 🌸`
+      : `${targetName}, thank you for cherishing today’s sweet moments. You are doing so amazingly, big warm hug from Momly 🌸`;
+
+    if (!this.ai) {
+      if (rawText && (!gratitudeItems || gratitudeItems.length === 0)) {
+        extractedGratitude = [rawText];
+      }
+      return {
+        gratitude: extractedGratitude,
+        microWins: extractedWins,
+        aiValidationNote: fallbackValidation,
+      };
+    }
+
+    try {
+      const prompt = `
+You are Momly ("Your AI bestie, always here"), a warm, loving, empathetic AI companion for mothers.
+The mother (${targetName}) has just shared her Heart Journal entry (Gratitude & Little Wins).
+Language: ${isIndonesian ? 'Bahasa Indonesia' : 'English'}.
+Input Method: ${inputMethod}.
+
+User Input Details:
+- Spoken/Raw Text (if voice/text): "${rawText || ''}"
+- Grateful For: ${(gratitudeItems || []).join(', ') || 'Not specified'}
+- Little Wins: ${(microWinItems || []).join(', ') || 'Not specified'}
+
+Tasks:
+1. If rawText is provided (e.g. from Voice input), extract/organize 1 to 3 concise bullet points for "gratitude" (hal yang disyukuri) and 1 to 3 concise points for "microWins" (kemenangan kecil/hal yang berhasil dilalui). If items were already provided, refine and keep them warm and clear.
+2. Generate an "aiValidationNote": A short, incredibly heartfelt, deeply validating 1 to 2 sentences from Momly to ${targetName}. Praise her patience, acknowledge her daily effort, and give her an emotional hug. Do NOT preach or give long advice. Speak as her bestie.
+Return strictly in JSON format.
+      `.trim();
+
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              gratitude: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: 'List of 1-3 gratitude points'
+              },
+              microWins: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: 'List of 1-3 micro-wins / little achievements'
+              },
+              aiValidationNote: {
+                type: Type.STRING,
+                description: '1-2 sentences warm, loving validation note from Momly'
+              }
+            },
+            required: ['gratitude', 'microWins', 'aiValidationNote']
+          }
+        }
+      });
+
+      const rawJson = (response.text?.trim() || '{}')
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```\s*$/i, '')
+        .trim();
+      const parsed = JSON.parse(rawJson);
+      return {
+        gratitude:
+          Array.isArray(parsed.gratitude) && parsed.gratitude.length > 0
+            ? parsed.gratitude
+            : extractedGratitude,
+        microWins:
+          Array.isArray(parsed.microWins) && parsed.microWins.length > 0
+            ? parsed.microWins
+            : extractedWins,
+        aiValidationNote: parsed.aiValidationNote || fallbackValidation,
+      };
+    } catch (e) {
+      console.warn('Failed to process journal with Gemini, using fallback:', e);
+      if (rawText && (!gratitudeItems || gratitudeItems.length === 0)) {
+        extractedGratitude = [rawText];
+      }
+      return {
+        gratitude: extractedGratitude,
+        microWins: extractedWins,
+        aiValidationNote: fallbackValidation,
+      };
+    }
+  }
 }
 
 export const geminiCompanion = new GeminiCompanionService();
