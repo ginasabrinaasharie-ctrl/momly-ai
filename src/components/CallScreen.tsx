@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, PhoneOff, Volume2, VolumeX, Sparkles, MessageSquareHeart, Send } from 'lucide-react';
 import { speechService } from '../services/speechService.ts';
 import { geminiCompanion } from '../services/geminiVoiceCompanion.ts';
+import { usageGuard } from '../services/usageGuard.ts';
 import { MomlyAvatar } from './MomlyAvatar.tsx';
 import { Language, translations } from '../services/i18n.ts';
 
@@ -135,6 +136,31 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang }) => {
     }
     if (!textToSend && textInput.trim()) {
       textToSend = textInput.trim();
+    }
+
+    // Check Rate Limiting & Safe Quota before making AI call
+    if (textToSend || (audioData && audioData.base64 && audioData.base64.length > 200)) {
+      const quota = usageGuard.consumeTurn();
+      if (!quota.allowed) {
+        setCallStatus('speaking');
+        const quotaNotice = lang === 'id'
+          ? 'Mama dan Juri yang baik, kuota sesi demo hari ini telah tercapai untuk menjaga kestabilan sistem. Terima kasih banyak telah mengevaluasi Momly di AI Builder Cup 2026!'
+          : 'Dear Mama and Judge, the safe session quota for today has been reached to protect system stability. Thank you so much for testing Momly for the AI Builder Cup 2026!';
+        setLatestModelText(quotaNotice);
+        if (isSpeakerOn) {
+          await speechService.speak(
+            quotaNotice,
+            geminiCompanion.getApiKey(),
+            () => setCallStatus('speaking'),
+            () => {
+              isProcessingRef.current = false;
+            }
+          );
+        } else {
+          isProcessingRef.current = false;
+        }
+        return;
+      }
     }
 
     // CASE 1: Transcribed text or typed text is available
@@ -311,7 +337,11 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang }) => {
       <div className="flex flex-col items-center pt-6 space-y-1.5">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F07B6B]/15 border border-[#F07B6B]/30 text-[#F5A898] text-[11px] font-medium">
           <Sparkles className="w-3 h-3 text-[#F07B6B] animate-spin" />
-          <span>{t.substatus}</span>
+          <span>
+            {usageGuard.getCurrentUser()?.role === 'judge'
+              ? (lang === 'id' ? 'Mode Juri • Kuota Aman Aktif' : 'Judge Mode • Quota Guard Active')
+              : t.substatus}
+          </span>
         </div>
         <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-1.5">
           Mom<span className="text-[#F07B6B]">ly</span>

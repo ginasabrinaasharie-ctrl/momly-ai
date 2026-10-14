@@ -19,8 +19,10 @@ import {
 import { LanguageSelectModal } from './components/LanguageSelectModal.tsx';
 import { UserOnboardingModal } from './components/UserOnboardingModal.tsx';
 import { MomlyAvatar } from './components/MomlyAvatar.tsx';
+import { AuthModal } from './components/AuthModal.tsx';
 import { geminiCompanion } from './services/geminiVoiceCompanion.ts';
 import { speechService } from './services/speechService.ts';
+import { usageGuard, AuthUser } from './services/usageGuard.ts';
 import { Language, translations } from './services/i18n.ts';
 
 export function App() {
@@ -37,6 +39,14 @@ export function App() {
   const [userName, setUserName] = useState<string>(() => {
     return localStorage.getItem('momly_user_name') || '';
   });
+  // Auth state
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    return usageGuard.getCurrentUser();
+  });
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(() => {
+    return !usageGuard.isAuthenticated();
+  });
+
   const [showNameModal, setShowNameModal] = useState(false);
   const [isInitialOnboarding, setIsInitialOnboarding] = useState(false);
 
@@ -55,16 +65,12 @@ export function App() {
   const [showMemoryModal, setShowMemoryModal] = useState(false);
   const [memories, setMemories] = useState<StoredMemory[]>([]);
 
-  // Strictly trigger onboarding modal once on the very first time opening app
-  useEffect(() => {
-    const hasBeenShown = localStorage.getItem('momly_onboarding_shown') === 'true';
-    if (!hasBeenShown) {
-      // Mark it immediately so it NEVER appears automatically again on refresh or next visits!
-      localStorage.setItem('momly_onboarding_shown', 'true');
-      setIsInitialOnboarding(true);
-      setShowNameModal(true);
-    }
-  }, []);
+  const handleAuthSuccess = (user: AuthUser) => {
+    setCurrentUser(user);
+    setUserName(user.name);
+    setShowAuthModal(false);
+    geminiCompanion.setUserName(user.name);
+  };
 
   // Sync language & userName with services
   useEffect(() => {
@@ -178,18 +184,25 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* User Nickname Button */}
+            {/* User Nickname / Judge Pill */}
             <button
-              onClick={() => {
-                setIsInitialOnboarding(false);
-                setShowNameModal(true);
-              }}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-[#FDDDD8] bg-[#FFF8F2] hover:bg-[#FDDDD8]/50 text-xs font-semibold text-[#1C1228] transition-all cursor-pointer shadow-2xs"
-              title={lang === 'id' ? 'Ubah Nama Panggilan' : 'Edit Nickname'}
+              onClick={() => setShowAuthModal(true)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border text-xs font-semibold transition-all cursor-pointer shadow-2xs ${
+                currentUser?.role === 'judge'
+                  ? 'border-amber-400 bg-amber-50 text-amber-900 hover:bg-amber-100 ring-2 ring-amber-300/40'
+                  : 'border-[#FDDDD8] bg-[#FFF8F2] hover:bg-[#FDDDD8]/50 text-[#1C1228]'
+              }`}
+              title={
+                currentUser?.role === 'judge'
+                  ? (lang === 'id' ? 'Akses Juri AI Builder Cup (Klik untuk ganti profil)' : 'AI Builder Cup Judge Pass (Click to switch)')
+                  : (lang === 'id' ? 'Ubah Profil' : 'Edit Profile')
+              }
             >
-              <span className="text-[#F07B6B] text-[11px]">💕</span>
-              <span className="font-bold text-[11px] text-[#6B5FA0] max-w-[90px] truncate">
-                {userName ? `Mama ${userName}` : (lang === 'id' ? '+ Nama' : '+ Name')}
+              <span className="text-[11px]">{currentUser?.role === 'judge' ? '⭐' : '💕'}</span>
+              <span className="font-bold text-[11px] max-w-[105px] truncate">
+                {currentUser?.role === 'judge'
+                  ? (lang === 'id' ? 'Mode Juri' : 'Judge Mode')
+                  : (userName ? `Mama ${userName}` : (lang === 'id' ? '+ Nama' : '+ Name'))}
               </span>
             </button>
 
@@ -571,6 +584,13 @@ export function App() {
             isInitialSetup={isInitialOnboarding}
           />
         )}
+
+        {/* AI Builder Cup Authentication & Judge Gate Modal */}
+        <AuthModal
+          isOpen={showAuthModal}
+          onSuccess={handleAuthSuccess}
+          lang={lang}
+        />
       </div>
     </div>
   );
