@@ -25,14 +25,14 @@ export const MoodCheckIn: React.FC<MoodCheckInProps> = ({
 
   return (
     <div id="mood-section" className="w-full max-w-md mx-auto bg-white/90 backdrop-blur-md rounded-3xl p-4 sm:p-5 border border-[#FDDDD8] shadow-sm mb-6 transition-all text-left">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-base">🌙</span>
-          <h3 className="text-xs sm:text-sm font-bold text-[#1C1228]">
+      <div className="flex items-center justify-between gap-2.5 mb-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-1">
+          <span className="text-base shrink-0">🌙</span>
+          <h3 className="text-xs sm:text-sm font-bold text-[#1C1228] leading-snug">
             {t.moodCheckInTitle}
           </h3>
         </div>
-        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EEE8FF] text-[#6B5FA0]">
+        <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-[#EEE8FF] text-[#6B5FA0] whitespace-nowrap shrink-0">
           {t.moodBadge}
         </span>
       </div>
