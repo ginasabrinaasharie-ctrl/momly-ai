@@ -140,9 +140,13 @@ export function App() {
         tips: summary.tips,
       };
 
-      const updatedMemories = [newMemory, ...memories];
+      const updatedMemories = [newMemory, ...memories].slice(0, 50);
       setMemories(updatedMemories);
-      localStorage.setItem('momly_memories', JSON.stringify(updatedMemories));
+      try {
+        localStorage.setItem('momly_memories', JSON.stringify(updatedMemories));
+      } catch (storageErr) {
+        console.warn('Storage quota exceeded, unable to persist new memory:', storageErr);
+      }
     } catch (e) {
       console.error(e);
     } finally {

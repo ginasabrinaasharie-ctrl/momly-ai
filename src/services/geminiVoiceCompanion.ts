@@ -351,7 +351,12 @@ Return raw JSON:
 
       let parsed: { transcript?: string; reply?: string } = {};
       try {
-        parsed = JSON.parse(response.text?.trim() || '{}');
+        const raw = (response.text?.trim() || '{}')
+          .replace(/^```json\s*/i, '')
+          .replace(/^```\s*/i, '')
+          .replace(/```\s*$/i, '')
+          .trim();
+        parsed = JSON.parse(raw);
       } catch (err) {
         console.warn('JSON parse error from audio response:', err);
       }
@@ -476,7 +481,11 @@ RULES:
         }
       });
 
-      const rawJson = response.text?.trim() || '{}';
+      const rawJson = (response.text?.trim() || '{}')
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/```\s*$/i, '')
+        .trim();
       return JSON.parse(rawJson);
     } catch (e) {
       console.warn('Fallback generating summary:', e);

@@ -14,6 +14,7 @@ class SpeechService {
   private isSpeaking = false;
   private currentUtterance: SpeechSynthesisUtterance | null = null;
   private currentAudio: HTMLAudioElement | null = null;
+  private speakingWatchdog: any = null;
   private currentLang: Language = 'en';
 
   constructor() {
@@ -369,7 +370,7 @@ class SpeechService {
   }
 
   /**
-   * Gemini 3.8 Flash TTS with voice "Tova" (Resonant and soothing, Medium-low pitch) and temperature 1.25
+   * Gemini 2.0 Flash Audio output with voice "Aoede" (warm, empathetic tone)
    */
   private speakWithGeminiTTS(
     text: string,
@@ -380,7 +381,7 @@ class SpeechService {
     return new Promise(async (resolve) => {
       try {
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -391,12 +392,12 @@ class SpeechService {
                 }
               ],
               generationConfig: {
-                temperature: 1.25,
+                temperature: 0.7,
                 responseModalities: ['AUDIO'],
                 speechConfig: {
                   voiceConfig: {
                     prebuiltVoiceConfig: {
-                      voiceName: 'Tova'
+                      voiceName: 'Aoede'
                     }
                   }
                 }
@@ -427,6 +428,10 @@ class SpeechService {
         const triggerEnd = () => {
           if (hasEnded) return;
           hasEnded = true;
+          if (this.speakingWatchdog) {
+            clearTimeout(this.speakingWatchdog);
+            this.speakingWatchdog = null;
+          }
           this.isSpeaking = false;
           this.currentAudio = null;
           onEnd?.();
@@ -448,7 +453,7 @@ class SpeechService {
 
         // Safety watchdog: ensure onEnd triggers even if browser stalls
         const estimatedSeconds = Math.max(4, Math.ceil(text.length / 12)) + 3;
-        const watchdog = setTimeout(() => {
+        this.speakingWatchdog = setTimeout(() => {
           if (!hasEnded) {
             triggerEnd();
           }
@@ -457,7 +462,6 @@ class SpeechService {
         try {
           await audio.play();
         } catch (playErr) {
-          clearTimeout(watchdog);
           triggerEnd();
         }
       } catch (err) {
@@ -513,6 +517,10 @@ class SpeechService {
       const triggerEnd = () => {
         if (hasEnded) return;
         hasEnded = true;
+        if (this.speakingWatchdog) {
+          clearTimeout(this.speakingWatchdog);
+          this.speakingWatchdog = null;
+        }
         this.isSpeaking = false;
         this.currentUtterance = null;
         onEnd?.();
@@ -534,7 +542,7 @@ class SpeechService {
 
       // Watchdog for WebSpeech API in Chrome
       const estimatedSeconds = Math.max(3, Math.ceil(text.length / 10)) + 3;
-      setTimeout(() => {
+      this.speakingWatchdog = setTimeout(() => {
         if (!hasEnded) {
           window.speechSynthesis.cancel();
           triggerEnd();
@@ -555,9 +563,14 @@ class SpeechService {
   }
 
   public stopSpeaking() {
+    if (this.speakingWatchdog) {
+      clearTimeout(this.speakingWatchdog);
+      this.speakingWatchdog = null;
+    }
     if (this.currentAudio) {
       try {
         this.currentAudio.pause();
+        this.currentAudio.currentTime = 0;
         this.currentAudio = null;
       } catch (e) {}
     }
