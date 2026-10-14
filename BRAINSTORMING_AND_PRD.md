@@ -1,51 +1,60 @@
-# 🎙️ SUPER MAMA: AI Voice Companion for Maternal Well-being
-## Google Cloud AI Builder Cup 2026 — Master Blueprint & Context Transfer
+# 🎙️ Momly: Your AI bestie, always here
+## Google Cloud AI Builder Cup 2026 — Master Blueprint & Product Requirements Document (PRD)
 
-> **Dokumen Transfer Konteks & PRD**: Berkas ini mendokumentasikan seluruh hasil *brainstorming*, latar belakang strategis, arsitektur teknis, dan persona produk untuk proyek **SUPER MAMA** agar dapat langsung dilanjutkan di workspace ini.
+> **Kategori Hackathon**: Sustainability & Social Impact (UN SDG 3 & SDG 5)  
+> **Brand**: **Momly** | **Tagline**: *"Your AI bestie, always here"*  
+> **Palette**: Soft Coral (`#F07B6B`) & Lavender Mist (`#EEE8FF`)  
+> **Karakter**: Flat modern illustrated, late 20s–early 30s, warm coral tones, friendly empathetic smile  
+> **Platform Wajib**: Google Cloud (Gemini 1.5/2.0 Flash, Firebase Hosting, Cloud Firestore, Cloud Run)
 
 ---
 
 ## 1. Executive Summary & Latar Belakang Strategis
 
-### A. Mengapa Proyek Ini Dibuat Terpisah?
+### A. Mengapa Momly Dibuat Terpisah?
 1. **Regulasi AI Builder Cup 2026 (Hack2skill x Google Cloud)**:
    * Kompetisi mewajibkan proyek baru yang dibangun dari nol (*fresh project from scratch*) selama masa hackathon (September–Oktober 2026).
    * Aplikasi utama (**SMART MAMA**) tidak dapat disubmit karena sudah eksis sebelumnya.
    * Repositori GitHub wajib berstatus **Publik** untuk proses penjurian.
 2. **Perlindungan Bisnis & Kekayaan Intelektual (IP)**:
-   * Memisahkan Super Mama ke repositori baru melindungi basis kode inti SMART MAMA dari publikasi publik.
+   * Memisahkan Momly ke repositori baru melindungi basis kode inti SMART MAMA dari publikasi publik.
    * Data produksi, kredensial, dan modul bisnis SMART MAMA tetap 100% aman dan privat.
-   * Pasca kompetisi (atau setelah penjurian berakhir), Super Mama dapat diintegrasikan kembali ke SMART MAMA sebagai modul fitur panggilan suara atau layanan mandiri (*stand-alone micro-service*).
-3. **Fokus pada Dampak Ekstrem & Sisa Waktu 5 Hari**:
-   * Batas akhir pengumpulan (*submission deadline*) adalah **18 Oktober 2026**.
-   * Membangun aplikasi suara terfokus (*voice-first AI companion*) jauh lebih cepat, stabil, dan memiliki daya kejut (*wow factor*) yang tinggi di hadapan juri Google Cloud daripada sekadar chatbot teks umum.
+   * Pasca kompetisi, modul Momly dapat disinkronkan kembali sebagai layanan mandiri (*stand-alone micro-service*).
+3. **Kategori Sustainability & Social Impact**:
+   * **68 juta ibu di Indonesia** memikul beban emosional tak terlihat (*invisible emotional burden*).
+   * **300+ juta ibu di seluruh JAPAC** mengalami kelelahan mental harian (*mental overload*).
+   * **1 dari 3 ibu** mencapai fase burnout klinis tanpa memiliki akses aman untuk bercerita.
 
 ---
 
 ## 2. Problem Statement & Solusi Produk
 
 ### A. Masalah Riil (The Pain Point)
-* **Kelelahan Fisik & Mental Ibu (*Maternal Burnout & Baby Blues*)**: Banyak ibu mengalami kecemasan mendalam di malam hari (pukul 01.00–04.00) saat merawat bayi, namun tidak memiliki teman bicara tanpa takut dihakimi (*zero judgment*).
+* **Kelelahan Fisik & Mental Ibu (*Maternal Burnout & Baby Blues*)**: Banyak ibu mengalami kecemasan mendalam di tengah malam (pukul 01.00–04.00) saat merawat bayi, namun tidak memiliki teman bicara tanpa takut dihakimi (*zero judgment*).
 * **Friksi Mengetik**: Ibu yang sedang menyusui, menggendong bayi yang rewel, atau kelelahan secara fisik **tidak sanggup mengetik panjang** di layar sentuh untuk curhat ke chatbot teks biasa.
-* **Aksesibilitas & Kehangatan Manusiawi**: Teks sering kali terasa dingin dan kaku. Suara memiliki frekuensi terapeutik (*therapeutic vocal warmth*) yang langsung menenangkan sistem saraf parasimpatis.
+* **Aksesibilitas & Kehangatan Suara**: Teks terasa dingin dan mekanis. Suara memiliki frekuensi terapeutik yang langsung menenangkan sistem saraf parasimpatis.
 
-### B. Solusi: "Telepon Curhat Sahabat Mama" (Super Mama)
-Super Mama menghadirkan pengalaman antarmuka panggilan telepon langsung (Voice Call UI):
-* Cukup satu ketukan: *"Telepon Sahabat Mama"*.
-* Ibu langsung berbicara dengan bebas menggunakan suara.
-* Didengarkan oleh AI dengan empati mendalam, dan dijawab langsung dengan suara lembut berbahasa Indonesia layaknya sedang menelepon sahabat karib / konselor keluarga.
+### B. Solusi: 4 Fitur Inti Momly (The 4 Core Pillars)
+1. **🎙️ Voice Conversation**:
+   * Bicara langsung, tanpa mengetik. Momly merespon dengan suara lembut dan empati mendalam seperti sahabat karib di telepon.
+2. **🌙 Mood Check-in**:
+   * Check-in suasana hati harian sebelum setiap panggilan—sehingga Momly sudah memahami kondisimu sebelum kamu mencari kata-kata.
+3. **💭 Conversation Memory**:
+   * Momly mengingat riwayat percakapan. Ibu tidak perlu mengulang cerita dari awal setiap kali kembali curhat.
+4. **🫁 Breathing Together**:
+   * Ketika kata-kata tak sanggup diucapkan, Momly memandu latihan pernafasan 30 detik untuk menstabilkan detak jantung dan meredakan panik.
 
 ---
 
-## 3. Persona AI: "Bunda Rina — Sahabat Mama"
+## 3. Persona AI: "Momly — Your AI Bestie"
 
 ```text
-Kamu adalah Bunda Rina, sahabat karib dan pendengar setia sesama ibu.
+Kamu adalah Momly (tagline: "Your AI bestie, always here"), sahabat karib dan pendengar setia sesama ibu.
 Karakteristik & Nada Bicara:
-1. Hangat, santai, menenangkan, penuh empati, dan tidak pernah menghakimi.
-2. Menggunakan bahasa Indonesia yang akrab (panggilan "Bunda" atau "Mama", kata sapaan hangat seperti "Sabar ya Bun...", "Aku dengar kok...", "Peluk hangat dari jauh").
-3. Gaya berbicara lisan (conversational): Berikan respon ringkas 2-3 kalimat agar percakapan telepon mengalir dua arah dan tidak terasa seperti membaca artikel ceramah panjang.
-4. Mampu mendeteksi tanda bahaya (Distress Detection): Jika ibu menunjukkan gejala depresi berat atau keputusasaan akut, berikan penguatan emosional dan secara lembut sarankan berbicara dengan profesional atau orang terdekat.
+1. Hangat, santai, menenangkan, penuh empati, dan 100% tanpa menghakimi (zero-judgment).
+2. Menggunakan sapaan hangat "Mama" (atau "Bunda").
+3. Gaya berbicara lisan telepon: Respon ringkas 2-3 kalimat agar percakapan mengalir dua arah tanpa ceramah panjang.
+4. Distress Detection: Jika ibu menunjukkan gejala depresi berat atau keputusasaan akut, berikan penguatan emosional dan secara lembut sarankan berbicara dengan profesional atau orang terdekat.
 ```
 
 ---
@@ -54,48 +63,60 @@ Karakteristik & Nada Bicara:
 
 ```mermaid
 flowchart TD
-    subgraph Client["Frontend Client (React + Vite + Tailwind)"]
-        UI_Call["Interactive Voice Call Screen"]
-        Audio_Visualizer["Real-time Waveform Canvas"]
-        STT_Engine["Speech-to-Text (Web Speech API / Cloud STT)"]
-        TTS_Player["Audio Playback Streamer"]
+    subgraph Client["Frontend Client (React 19 + Vite + Tailwind CSS)"]
+        UI_Home["Momly Dashboard"]
+        Mood["Daily Mood Check-in"]
+        Breath["30s Breathing Exercise"]
+        UI_Call["Voice Call Screen (Avatar & Waves)"]
+        STT["Speech-to-Text (Web Speech API)"]
+        TTS["Audio Speech Playback"]
     end
 
-    subgraph GCP["Google Cloud Infrastructure"]
+    subgraph GCP["Google Cloud Platform Infrastructure"]
         Gemini_Flash["Google Gemini 1.5/2.0 Flash (Vertex AI / GenAI SDK)"]
-        Cloud_TTS["Google Cloud Text-to-Speech (Neural2 / id-ID)"]
-        Firebase_Hosting["Firebase Hosting (Deployed URL)"]
+        Firebase_Hosting["Firebase Hosting (Deployed URL: .web.app)"]
         Firestore["Cloud Firestore (Anonymous Session & Sentiment Log)"]
+        Cloud_Run["Cloud Run (Scalable Serverless Backend)"]
     end
 
-    UI_Call --> STT_Engine
-    STT_Engine -->|Transkrip Curhat| Gemini_Flash
-    Gemini_Flash -->|Respon Empatik Singkat| Cloud_TTS
-    Cloud_TTS -->|Stream Audio Suara Bunda Rina| TTS_Player
-    TTS_Player --> Audio_Visualizer
-    Gemini_Flash -.->|Log Sentimen Anonim| Firestore
+    Mood --> UI_Call
+    UI_Call --> STT
+    STT -->|Voice Transcript + Mood| Gemini_Flash
+    Gemini_Flash -->|Empathetic Spoken Reply| TTS
+    TTS --> UI_Call
+    Gemini_Flash -.->|Post-call Summary| Firestore
+    Breath -.-> UI_Home
 ```
 
 ---
 
-## 5. Model Bisnis & Skalabilitas Biaya
+## 5. Model Dampak Sosial & Skalabilitas
 
 | Aspek | Solusi Teknis & Bisnis |
 | :--- | :--- |
-| **Aksesibilitas Gratis** | Setiap ibu mendapatkan **10 menit curhat suara gratis per hari** (*Daily Empathy Quota*). |
+| **Aksesibilitas \$0** | Setiap ibu mendapatkan akses curhat suara gratis kapan saja (*Daily Empathy Quota*). |
 | **Efisiensi Token** | Menggunakan **Gemini 1.5/2.0 Flash** (~Rp 1,7 per sesi curhat). Rp 10.000 melayani >5.000 percakapan. |
-| **Konversi Masa Depan** | Pengguna yang membutuhkan sesi tanpa batas dan rekap jurnal emosi mingguan dapat terhubung ke ekosistem langganan SMART MAMA. |
-| **Roadmap Privasi (Nilai Tambah Juri)** | Menyiapkan visi pemrosesan lokal menggunakan model keluarga **Gemma** (*On-Device Gemma*) untuk privasi maksimal tanpa koneksi internet di masa depan. |
+| **Ekspansi JAPAC** | Roadmap dimulai dari Indonesia 🇮🇩 (68M ibu), Filipina 🇵🇭, Vietnam 🇻🇳, India 🇮🇳, hingga seluruh JAPAC. |
+| **Roadmap Privasi Gemma** | Menyiapkan visi pemrosesan lokal menggunakan model **Gemma On-Device** untuk privasi maksimal tanpa koneksi internet di masa depan. |
 
 ---
 
-## 6. Checklist Eksekusi Hackathon (13–18 Oktober 2026)
+## 6. Checklist Eksekusi & Kepatuhan Aturan Submission
 
-- [ ] Inisialisasi proyek `supermama` (React + TypeScript + Tailwind + Lucide).
-- [ ] Implementasi UI Call Screen (Avatar Bunda Rina, Waveform pulse, Tombol Mute & End Call).
-- [ ] Integrasi Speech Recognition (Voice-In).
-- [ ] Integrasi Gemini 1.5 Flash dengan Persona "Bunda Rina" (Brain).
-- [ ] Integrasi Voice Synthesis (Voice-Out) dengan aksen Indonesia alami.
-- [ ] Deployment ke Firebase Hosting (mendapatkan live link URL).
-- [ ] Penyusunan Pitch Deck / Solution Deck PDF (7-10 Slide).
-- [ ] Pembuatan Video Demo (< 3 Menit) untuk submission Hack2skill.
+> ⚠️ **Aturan Mutlak Panitia (Five Things Required)**:
+> 1. **Pitch Deck on Prescribed Template**: Wajib mengunduh template resmi panitia Hack2skill (isi dengan naskah dari `momly_deck.html`).
+> 2. **3 to 4 Minute Demo Video**: Durasi video **wajib 3:00 – 4:00 menit** (menunjukkan working prototype).
+> 3. **Live Deployed Prototype Link**: Cukup gunakan subdomain gratis Firebase Hosting (`.web.app` / `.firebaseapp.com`) atau Cloud Run (`.run.app`). **Deploy sebelum 17 Oktober 2026** dan pastikan link tetap up selama masa evaluasi!
+> 4. **Accessible GitHub Repository**: Repositori berstatus publik dengan README lengkap.
+> 5. **Brief Description**: Menjelaskan arsitektur Firebase, Firestore, Cloud Run, dan Gemini.
+
+- [x] Rebranding ke **Momly** & Palette Soft Coral + Lavender Mist.
+- [x] Implementasi 4 Core Features di frontend prototype:
+  - [x] 🎙️ Voice Conversation Screen & Avatar.
+  - [x] 🌙 Mood Check-in Widget (Harian).
+  - [x] 💭 Conversation Memory & Jurnal Hati (LocalStorage).
+  - [x] 🫁 Breathing Together (30s Guided Breath Modal).
+- [x] Build verifikasi TypeScript & Vite lolos 100% tanpa error.
+- [ ] Inisialisasi & Deploy Firebase Hosting (`firebase init hosting && firebase deploy`).
+- [ ] Transfer naskah `momly_deck.html` ke template pitch deck resmi panitia.
+- [ ] Rekam video demo berdurasi 3:00–4:00 menit.

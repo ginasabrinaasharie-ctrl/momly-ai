@@ -1,8 +1,23 @@
 @import "tailwindcss";
 
+@theme {
+  --color-coral: #F07B6B;
+  --color-coral-light: #FDDDD8;
+  --color-coral-mid: #F5A898;
+  --color-coral-dark: #D95D4D;
+  --color-lavender: #EEE8FF;
+  --color-lavender-light: #F8F5FF;
+  --color-lavender-deep: #9B8EC4;
+  --color-lavender-dark: #6B5FA0;
+  --color-night: #1C1228;
+  --color-night-mid: #2D2040;
+}
+
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #FDFCFF;
+    color: #1C1228;
   }
 }
 
@@ -36,4 +51,23 @@
 
 .wave-bar {
   animation: gentle-wave 1.2s ease-in-out infinite;
+}
+
+@keyframes breathe-circle {
+  0%, 100% {
+    transform: scale(0.85);
+  }
+  40% {
+    transform: scale(1.25);
+  }
+  60% {
+    transform: scale(1.25);
+  }
+  90% {
+    transform: scale(0.85);
+  }
+}
+
+.animate-breathe {
+  animation: breathe-circle 12s ease-in-out infinite;
 }

@@ -1,0 +1,26 @@
+{
+  "name": "Momly — Your AI bestie, always here",
+  "short_name": "Momly",
+  "description": "Teman curhat dan pendengar hangat berbasis suara untuk para ibu tanpa rasa dihakimi.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDFCFF",
+  "theme_color": "#F07B6B",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/momly/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
