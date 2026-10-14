@@ -1,5 +1,5 @@
-# 🌸 Momly: Your AI bestie, always here
-### AI Voice Companion for Maternal Well-being
+# 🌸 Momly : Mom's Friendly AI Bestie
+### Empathetic Voice Companion for Maternal Well-being
 **Google Cloud AI Builder Cup 2026 (JAPAC) · Category: Sustainability & Social Impact**
 
 [![Google Cloud](https://img.shields.io/badge/Google%20Cloud-AI%20Builder%20Cup%202026-4285F4?logo=google-cloud&logoColor=white)](https://aibuildercup.com/)

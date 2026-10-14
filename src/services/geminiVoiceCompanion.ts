@@ -1,4 +1,4 @@
-// Bilingual Gemini Voice Companion Service: "Momly — Your AI bestie, always here"
+// Bilingual Gemini Voice Companion Service: "Momly : Mom's Friendly AI Bestie"
 import { GoogleGenAI } from '@google/genai';
 import { Language, translations } from './i18n.ts';
 

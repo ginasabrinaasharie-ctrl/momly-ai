@@ -1,8 +1,8 @@
 {
-  "name": "supermama-ai",
+  "name": "momly-ai",
   "private": true,
   "version": "1.0.0",
-  "description": "Super Mama: AI Voice Companion for Maternal Well-being (Google Cloud AI Builder Cup 2026)",
+  "description": "Momly : Mom's Friendly AI Bestie (Google Cloud AI Builder Cup 2026)",
   "type": "module",
   "scripts": {
     "dev": "vite",
