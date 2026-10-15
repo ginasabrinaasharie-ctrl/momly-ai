@@ -392,7 +392,7 @@ class SpeechService {
                 }
               ],
               generationConfig: {
-                temperature: 1.0,
+                temperature: 1.25,
                 responseModalities: ['AUDIO'],
                 speechConfig: {
                   voiceConfig: {

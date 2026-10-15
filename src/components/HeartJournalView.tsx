@@ -23,7 +23,7 @@ export const HeartJournalView: React.FC<HeartJournalViewProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <main className="flex-1 px-4 py-6 flex flex-col text-left overflow-y-auto pb-24">
+    <main className="flex-1 px-4 py-6 flex flex-col text-left overflow-y-auto pb-28">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
