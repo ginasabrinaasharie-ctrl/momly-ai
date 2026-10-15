@@ -6,7 +6,7 @@ export interface AuthUser {
   role: 'judge' | 'mama';
   email?: string;
   photoURL?: string;
-  authProvider: 'demo_bypass' | 'google' | 'guest';
+  authProvider: 'demo_bypass' | 'google' | 'guest' | 'email';
 }
 
 export interface UsageStatus {
@@ -85,6 +85,24 @@ class UsageGuardService {
     localStorage.setItem(this.USER_STORAGE_KEY, JSON.stringify(googleUser));
     localStorage.setItem('momly_user_name', cleanName);
     return googleUser;
+  }
+
+  public loginWithFirebaseEmail(
+    uid: string,
+    name: string,
+    email: string
+  ): AuthUser {
+    const cleanName = name.trim() || 'Mama';
+    const emailUser: AuthUser = {
+      id: uid || `email-${Date.now()}`,
+      name: cleanName,
+      role: 'mama',
+      email: email.trim(),
+      authProvider: 'email',
+    };
+    localStorage.setItem(this.USER_STORAGE_KEY, JSON.stringify(emailUser));
+    localStorage.setItem('momly_user_name', cleanName);
+    return emailUser;
   }
 
   public logout(): void {

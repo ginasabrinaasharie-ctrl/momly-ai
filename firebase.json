@@ -60,6 +60,7 @@
   },
   "auth": {
     "providers": {
+      "emailPassword": true,
       "googleSignIn": {
         "oAuthBrandDisplayName": "Momly AI Companion",
         "supportEmail": "ginasabrina.asharie@gmail.com"

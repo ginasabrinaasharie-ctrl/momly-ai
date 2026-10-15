@@ -4,6 +4,9 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
   User as FirebaseUser,
 } from 'firebase/auth';
 
@@ -46,4 +49,35 @@ export async function logoutFirebase(): Promise<void> {
   } catch (err) {
     console.warn('Firebase signOut error:', err);
   }
+}
+
+/**
+ * Sign in existing user with email and password via Firebase Auth.
+ */
+export async function loginWithEmailPassword(
+  email: string,
+  password: string
+): Promise<FirebaseUser> {
+  const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+  return result.user;
+}
+
+/**
+ * Register a new user with name, email, and password via Firebase Auth.
+ */
+export async function registerWithEmailPassword(
+  name: string,
+  email: string,
+  password: string
+): Promise<FirebaseUser> {
+  const result = await createUserWithEmailAndPassword(auth, email.trim(), password);
+  const cleanName = name.trim() || 'Mama';
+  if (result.user) {
+    try {
+      await updateProfile(result.user, { displayName: cleanName });
+    } catch (e) {
+      console.warn('Failed to update displayName:', e);
+    }
+  }
+  return result.user;
 }
