@@ -229,7 +229,7 @@ export function App() {
   return (
     <div className="min-h-screen bg-[#F7F4FA] sm:py-6 flex items-center justify-center font-sans antialiased text-[#1C1228]">
       {/* Mobile-First App Container Frame */}
-      <div className="w-full max-w-md min-h-screen sm:min-h-[844px] bg-[#FDFCFF] sm:rounded-[40px] shadow-2xl sm:border sm:border-[#FDDDD8] overflow-hidden flex flex-col relative select-none">
+      <div className="w-full max-w-md h-screen h-dvh sm:h-[844px] sm:max-h-[844px] bg-[#FDFCFF] sm:rounded-[40px] shadow-2xl sm:border sm:border-[#FDDDD8] overflow-hidden flex flex-col relative select-none">
         
         {/* Top Mobile App Header */}
         <header className="w-full border-b border-[#FDDDD8]/80 bg-white/95 backdrop-blur-md sticky top-0 z-40 px-3 py-2.5 flex items-center justify-between gap-1.5">
@@ -295,7 +295,7 @@ export function App() {
 
         {/* Tab 1: Companion (Main Voice Screen) */}
         {activeTab === 'home' && (
-          <main className="flex-1 px-4 py-5 flex flex-col items-center justify-between text-center overflow-y-auto pb-28">
+          <main className="flex-1 px-4 py-5 flex flex-col items-center justify-between text-center overflow-y-auto pb-6">
             {/* Daily Affirmation Card matching Screen 04 */}
             <div className="w-full mb-3.5 p-3.5 rounded-3xl bg-gradient-to-r from-[#FDDDDB]/70 via-[#EEE8FF]/70 to-[#FFF8F2] border border-[#FDDDDB] shadow-xs flex items-center justify-between gap-3 text-left">
               <div className="space-y-0.5">
@@ -379,7 +379,7 @@ export function App() {
 
         {/* Tab 2: Breathe (Full-screen Mobile Breathing View) */}
         {activeTab === 'breathe' && (
-          <main className="flex-1 px-4 py-8 flex flex-col items-center justify-center text-center overflow-y-auto pb-28">
+          <main className="flex-1 px-4 py-8 flex flex-col items-center justify-center text-center overflow-y-auto pb-6">
             <div className="w-full max-w-xs space-y-4">
               <div className="w-14 h-14 mx-auto rounded-3xl bg-[#EEE8FF] text-[#6B5FA0] flex items-center justify-center text-2xl shadow-xs">
                 🫁
@@ -424,76 +424,74 @@ export function App() {
           />
         )}
 
-        {/* Mobile App Floating Bottom Navigation Bar (4 Clean Tabs: Curhat, Jeda, Jurnal, Surat) */}
-        <div className="absolute bottom-4 left-3 right-3 sm:bottom-5 sm:left-4 sm:right-4 z-30 pointer-events-none flex justify-center">
-          <nav className="w-full max-w-sm pointer-events-auto bg-white/95 backdrop-blur-xl border border-[#FDDDD8] rounded-full p-1.5 flex items-center justify-between shadow-lg shadow-[#1C1228]/8 ring-1 ring-[#FDDDD8]/40">
-            {/* Tab 1: Curhat (Home) */}
-            <button
-              onClick={() => setActiveTab('home')}
-              className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-full transition-all cursor-pointer ${
-                activeTab === 'home'
-                  ? 'bg-gradient-to-r from-[#FFF0ED] to-[#FFE8E4] text-[#F07B6B] font-bold shadow-2xs scale-102'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <MessageCircleHeart className="w-5 h-5" />
-              <span className="text-[10px] font-bold mt-0.5">{t.bottomNav.home}</span>
-            </button>
+        {/* Sticky Mobile App Bottom Navigation Bar (4 Clean Tabs: Curhat, Jeda, Jurnal, Surat) */}
+        <nav className="shrink-0 w-full bg-white/95 backdrop-blur-md border-t border-[#FDDDD8]/80 py-2 px-3 flex items-center justify-around z-30 shadow-[0_-4px_20px_rgba(28,18,40,0.05)]">
+          {/* Tab 1: Curhat (Home) */}
+          <button
+            onClick={() => setActiveTab('home')}
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer px-3 py-1 rounded-xl ${
+              activeTab === 'home'
+                ? 'text-[#F07B6B] font-bold'
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <MessageCircleHeart className="w-5 h-5" />
+            <span className="text-[10px] font-bold">{t.bottomNav.home}</span>
+          </button>
 
-            {/* Tab 2: Jeda (Breathe) */}
-            <button
-              onClick={() => setActiveTab('breathe')}
-              className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-full transition-all cursor-pointer ${
-                activeTab === 'breathe'
-                  ? 'bg-gradient-to-r from-[#F2EDFF] to-[#EEE8FF] text-[#6B5FA0] font-bold shadow-2xs scale-102'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <Wind className="w-5 h-5" />
-              <span className="text-[10px] font-bold mt-0.5">{t.bottomNav.breathe}</span>
-            </button>
+          {/* Tab 2: Jeda (Breathe) */}
+          <button
+            onClick={() => setActiveTab('breathe')}
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer px-3 py-1 rounded-xl ${
+              activeTab === 'breathe'
+                ? 'text-[#6B5FA0] font-bold'
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <Wind className="w-5 h-5" />
+            <span className="text-[10px] font-bold">{t.bottomNav.breathe}</span>
+          </button>
 
-            {/* Tab 3: Jurnal (Gratitude & Wins) */}
-            <button
-              onClick={() => setActiveTab('journal')}
-              className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-full transition-all cursor-pointer relative ${
-                activeTab === 'journal'
-                  ? 'bg-gradient-to-r from-[#FFF0ED] to-[#FFE8E4] text-[#F07B6B] font-bold shadow-2xs scale-102'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <div className="relative">
-                <BookHeart className="w-5 h-5" />
-                {journalEntries.length > 0 && (
-                  <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-[#F07B6B] text-white text-[8px] flex items-center justify-center font-bold">
-                    {journalEntries.length}
-                  </span>
-                )}
-              </div>
-              <span className="text-[10px] font-bold mt-0.5">{t.bottomNav.journal}</span>
-            </button>
+          {/* Tab 3: Jurnal (Gratitude & Wins) */}
+          <button
+            onClick={() => setActiveTab('journal')}
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer px-3 py-1 rounded-xl relative ${
+              activeTab === 'journal'
+                ? 'text-[#F07B6B] font-bold'
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <div className="relative">
+              <BookHeart className="w-5 h-5" />
+              {journalEntries.length > 0 && (
+                <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-[#F07B6B] text-white text-[8px] flex items-center justify-center font-bold">
+                  {journalEntries.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] font-bold">{t.bottomNav.journal}</span>
+          </button>
 
-            {/* Tab 4: Surat (Love Letters from Call Memory) */}
-            <button
-              onClick={() => setActiveTab('letters')}
-              className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-full transition-all cursor-pointer relative ${
-                activeTab === 'letters'
-                  ? 'bg-gradient-to-r from-[#F2EDFF] to-[#EEE8FF] text-[#6B5FA0] font-bold shadow-2xs scale-102'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <div className="relative">
-                <Mail className="w-5 h-5" />
-                {memories.length > 0 && (
-                  <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-[#6B5FA0] text-white text-[8px] flex items-center justify-center font-bold">
-                    {memories.length}
-                  </span>
-                )}
-              </div>
-              <span className="text-[10px] font-bold mt-0.5">{t.bottomNav.letters}</span>
-            </button>
-          </nav>
-        </div>
+          {/* Tab 4: Surat (Love Letters from Call Memory) */}
+          <button
+            onClick={() => setActiveTab('letters')}
+            className={`flex flex-col items-center gap-1 transition-colors cursor-pointer px-3 py-1 rounded-xl relative ${
+              activeTab === 'letters'
+                ? 'text-[#6B5FA0] font-bold'
+                : 'text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <div className="relative">
+              <Mail className="w-5 h-5" />
+              {memories.length > 0 && (
+                <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-[#6B5FA0] text-white text-[8px] flex items-center justify-center font-bold">
+                  {memories.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] font-bold">{t.bottomNav.letters}</span>
+          </button>
+        </nav>
 
         {/* Active In-Call Screen Overlay */}
         {isCalling && (
