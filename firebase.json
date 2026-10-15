@@ -57,5 +57,13 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Momly AI Companion",
+        "supportEmail": "ginasabrina.asharie@gmail.com"
+      }
+    }
   }
 }

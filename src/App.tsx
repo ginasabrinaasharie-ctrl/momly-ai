@@ -25,6 +25,7 @@ import { AuthModal } from './components/AuthModal.tsx';
 import { geminiCompanion } from './services/geminiVoiceCompanion.ts';
 import { speechService } from './services/speechService.ts';
 import { usageGuard, AuthUser } from './services/usageGuard.ts';
+import { logoutFirebase } from './services/firebase.ts';
 import { Language, translations } from './services/i18n.ts';
 import { JournalEntry } from './types/journal.ts';
 
@@ -77,6 +78,7 @@ export function App() {
 
   const handleLogout = () => {
     usageGuard.logout();
+    logoutFirebase();
     setCurrentUser(null);
     setUserName('');
     localStorage.removeItem('momly_user_name');
@@ -257,7 +259,15 @@ export function App() {
                   : (lang === 'id' ? 'Profil Akun' : 'Account Profile')
               }
             >
-              <span className="text-[10px] shrink-0">{currentUser?.role === 'judge' ? '⭐' : '👤'}</span>
+              {currentUser?.photoURL ? (
+                <img
+                  src={currentUser.photoURL}
+                  alt=""
+                  className="w-4 h-4 rounded-full shrink-0 object-cover border border-slate-200"
+                />
+              ) : (
+                <span className="text-[10px] shrink-0">{currentUser?.role === 'judge' ? '⭐' : '👤'}</span>
+              )}
               <span className="font-bold text-[10px] sm:text-[11px] truncate">
                 {currentUser?.role === 'judge'
                   ? (lang === 'id' ? 'Mode Juri' : 'Judge Mode')

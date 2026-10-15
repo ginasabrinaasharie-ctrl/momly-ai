@@ -5,6 +5,7 @@ export interface AuthUser {
   name: string;
   role: 'judge' | 'mama';
   email?: string;
+  photoURL?: string;
   authProvider: 'demo_bypass' | 'google' | 'guest';
 }
 
@@ -64,6 +65,26 @@ class UsageGuardService {
     localStorage.setItem(this.USER_STORAGE_KEY, JSON.stringify(mamaUser));
     localStorage.setItem('momly_user_name', cleanName);
     return mamaUser;
+  }
+
+  public loginWithFirebaseGoogle(
+    uid: string,
+    name: string,
+    email?: string,
+    photoURL?: string
+  ): AuthUser {
+    const cleanName = name.trim() || 'Mama';
+    const googleUser: AuthUser = {
+      id: uid || `google-${Date.now()}`,
+      name: cleanName,
+      role: 'mama',
+      email: email?.trim(),
+      photoURL: photoURL || undefined,
+      authProvider: 'google',
+    };
+    localStorage.setItem(this.USER_STORAGE_KEY, JSON.stringify(googleUser));
+    localStorage.setItem('momly_user_name', cleanName);
+    return googleUser;
   }
 
   public logout(): void {

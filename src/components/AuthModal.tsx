@@ -3,6 +3,7 @@ import { Sparkles, ArrowRight, LogOut, X, User } from 'lucide-react';
 import { MomlyAvatar } from './MomlyAvatar.tsx';
 import { Language } from '../services/i18n.ts';
 import { usageGuard, AuthUser } from '../services/usageGuard.ts';
+import { loginWithGooglePopup } from '../services/firebase.ts';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const [identifier, setIdentifier] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authError, setAuthError] = useState<string>('');
 
   if (!isOpen) return null;
 
@@ -41,16 +43,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }, 200);
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setIsSubmitting(true);
-    const user = usageGuard.loginAsMama(
-      isIndonesian ? 'Pengguna Google' : 'Google User',
-      'user@gmail.com'
-    );
-    setTimeout(() => {
+    setAuthError('');
+    try {
+      const firebaseUser = await loginWithGooglePopup();
+      const displayName =
+        firebaseUser.displayName?.trim() ||
+        firebaseUser.email?.split('@')[0] ||
+        (isIndonesian ? 'Mama' : 'Mama');
+
+      const user = usageGuard.loginWithFirebaseGoogle(
+        firebaseUser.uid,
+        displayName,
+        firebaseUser.email || undefined,
+        firebaseUser.photoURL || undefined
+      );
+
       onSuccess(user);
+    } catch (err: any) {
+      console.warn('Google sign-in error:', err);
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        // User closed popup without selecting account
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setAuthError(
+          isIndonesian
+            ? 'Domain ini belum diotorisasi di Firebase Authentication.'
+            : 'This domain is not authorized in Firebase Authentication.'
+        );
+      } else {
+        setAuthError(
+          isIndonesian
+            ? 'Gagal masuk dengan Google. Silakan coba lagi.'
+            : 'Google sign-in failed. Please try again.'
+        );
+      }
+    } finally {
       setIsSubmitting(false);
-    }, 200);
+    }
   };
 
   const handleJudgeBypass = () => {
@@ -149,8 +179,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
               />
             </svg>
-            <span>{isIndonesian ? 'Lanjutkan dengan Google' : 'Continue with Google'}</span>
+            <span>
+              {isSubmitting
+                ? (isIndonesian ? 'Menghubungkan ke Google...' : 'Connecting to Google...')
+                : (isIndonesian ? 'Lanjutkan dengan Google' : 'Continue with Google')}
+            </span>
           </button>
+
+          {/* Error notice if Google sign-in encounters issue */}
+          {authError && (
+            <p className="text-[11px] text-rose-500 bg-rose-50 border border-rose-100 rounded-xl p-2 font-medium">
+              ⚠️ {authError}
+            </p>
+          )}
 
           {/* Standard Form: Email or Name */}
           <form onSubmit={handleStandardLogin} className="space-y-2 pt-1">
