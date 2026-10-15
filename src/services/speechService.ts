@@ -370,7 +370,7 @@ class SpeechService {
   }
 
   /**
-   * Gemini 2.0 Flash Audio output with voice "Aoede" (warm, empathetic tone)
+   * Gemini 3.8 Flash TTS with voice "Tova" (Resonant and soothing, warm tone)
    */
   private speakWithGeminiTTS(
     text: string,
@@ -381,7 +381,7 @@ class SpeechService {
     return new Promise(async (resolve) => {
       try {
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -392,12 +392,12 @@ class SpeechService {
                 }
               ],
               generationConfig: {
-                temperature: 0.7,
+                temperature: 1.0,
                 responseModalities: ['AUDIO'],
                 speechConfig: {
                   voiceConfig: {
                     prebuiltVoiceConfig: {
-                      voiceName: 'Aoede'
+                      voiceName: 'Tova'
                     }
                   }
                 }
@@ -407,21 +407,25 @@ class SpeechService {
         );
 
         if (!response.ok) {
+          console.warn('Gemini TTS HTTP response status:', response.status, response.statusText);
           resolve(false);
           return;
         }
 
         const data = await response.json();
-        const candidatePart = data.candidates?.[0]?.content?.parts?.[0];
-        const audioData = candidatePart?.inlineData;
+        const parts = data.candidates?.[0]?.content?.parts || [];
+        const audioPart = parts.find((p: any) => p.inlineData && p.inlineData.data);
+        const audioData = audioPart?.inlineData;
 
         if (!audioData || !audioData.data) {
+          console.warn('Gemini TTS did not return audio data, falling back.');
           resolve(false);
           return;
         }
 
         const mime = audioData.mimeType || 'audio/wav';
         const audio = new Audio(`data:${mime};base64,${audioData.data}`);
+        audio.volume = 1.0;
         this.currentAudio = audio;
 
         let hasEnded = false;
@@ -465,6 +469,7 @@ class SpeechService {
           triggerEnd();
         }
       } catch (err) {
+        console.warn('Gemini TTS error:', err);
         resolve(false);
       }
     });
@@ -490,8 +495,9 @@ class SpeechService {
       const isIndonesian = this.currentLang === 'id' || hasIndonesianWords;
 
       utterance.lang = isIndonesian ? 'id-ID' : 'en-US';
-      utterance.rate = 0.92;
-      utterance.pitch = 0.95;
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
 
       const voices = window.speechSynthesis.getVoices();
 
