@@ -628,9 +628,22 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
           {safetyAlert && (
             <div className="mt-3 p-3.5 rounded-2xl bg-rose-950/85 border border-rose-400/50 backdrop-blur-md text-left shadow-2xl animate-fade-in w-full">
               <div className="flex items-center justify-between pb-1.5 border-b border-rose-400/20 mb-2">
-                <div className="flex items-center gap-1.5 text-rose-300 font-bold text-xs">
+                <div className="flex items-center gap-1.5 text-rose-300 font-bold text-xs flex-wrap">
                   <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
                   <span>{lang === 'id' ? 'Bantuan Darurat & Profesional' : 'Emergency & Professional Help'}</span>
+                  {safetyAlert.detectedRegion && safetyAlert.detectedRegion !== 'GLOBAL' && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-400/30 font-medium">
+                      {safetyAlert.detectedRegion === 'ID'
+                        ? '🇮🇩 ID'
+                        : safetyAlert.detectedRegion === 'IN'
+                        ? '🇮🇳 IN'
+                        : safetyAlert.detectedRegion === 'UK'
+                        ? '🇬🇧 UK'
+                        : safetyAlert.detectedRegion === 'AU'
+                        ? '🇦🇺 AU'
+                        : '🇺🇸 US/CA'}
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={() => setSafetyAlert(null)}

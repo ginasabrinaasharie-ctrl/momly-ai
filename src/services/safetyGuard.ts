@@ -18,6 +18,8 @@ export interface SafetyEvaluation {
   detectedCategories: string[];
   safeInterventionPrompt?: string;
   emergencyResources: EmergencyResource[];
+  detectedRegion?: DetectedCrisisRegion;
+  detectedSource?: string;
 }
 
 export interface EmergencyResource {
@@ -34,48 +36,191 @@ export const OFFICIAL_SAFETY_DISCLAIMER = {
 
 export type DetectedCrisisRegion = 'ID' | 'IN' | 'US_CA' | 'UK' | 'AU' | 'GLOBAL';
 
+export interface LocationSignals {
+  userOverride?: string;          // User-selected country in profile / settings (e.g. 'ID', 'IN', 'US', etc.)
+  networkCountryCode?: string;    // IP-based 2-letter country code (e.g. 'ID', 'IN', 'US', 'GB', 'AU')
+  timeZone?: string;              // Timezone string (e.g. 'Asia/Jakarta', 'Asia/Kolkata')
+  localeLanguages?: string[];     // navigator.languages (e.g. ['en-IN', 'hi-IN'])
+}
+
+export interface RegionResolutionResult {
+  region: DetectedCrisisRegion;
+  source: 'user_override' | 'network_ip' | 'timezone' | 'locale' | 'global_fallback';
+  countryCode?: string;
+  detail: string;
+}
+
+let memoryCachedNetworkCountry: string | null = null;
+
 /**
- * Detect user's crisis support region from device/browser timezone without intrusive GPS permission.
+ * Lightweight, non-intrusive probe for real-time network IP country.
+ * Uses Cloudflare edge trace (free, zero tracking, sub-50ms) with timeout & caching.
  */
-export function detectCrisisRegion(timeZoneOverride?: string): DetectedCrisisRegion {
+export async function probeNetworkCountry(): Promise<string | null> {
+  if (memoryCachedNetworkCountry) return memoryCachedNetworkCountry;
+
   try {
-    const tz = (timeZoneOverride || (typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : '') || '').trim();
-    if (!tz) return 'GLOBAL';
-
-    // Indonesia: Asia/Jakarta (WIB), Asia/Pontianak (WIB), Asia/Makassar (WITA), Asia/Jayapura (WIT), etc.
-    if (/(Asia\/(Jakarta|Pontianak|Makassar|Jayapura|Ujung_Pandang))/i.test(tz)) {
-      return 'ID';
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const stored = window.sessionStorage.getItem('momly_network_country');
+      if (stored) {
+        memoryCachedNetworkCountry = stored;
+        return stored;
+      }
     }
 
-    // India: Asia/Kolkata (IST), Asia/Calcutta
-    if (/(Asia\/(Kolkata|Calcutta))/i.test(tz)) {
-      return 'IN';
-    }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1200);
 
-    // United Kingdom & Ireland: Europe/London, Europe/Belfast, Europe/Dublin
-    if (/^(Europe\/(London|Belfast|Dublin)|GB)/i.test(tz)) {
-      return 'UK';
-    }
+    const res = await fetch('https://cloudflare.com/cdn-cgi/trace', {
+      signal: controller.signal,
+      cache: 'force-cache',
+    });
+    clearTimeout(timeoutId);
 
-    // Australia & New Zealand: Australia/..., Pacific/Auckland
-    if (/^(Australia\/|Pacific\/(Auckland|Chatham))/i.test(tz)) {
-      return 'AU';
+    if (res.ok) {
+      const text = await res.text();
+      const locLine = text.split('\n').find((l) => l.startsWith('loc='));
+      if (locLine) {
+        const country = locLine.replace('loc=', '').trim().toUpperCase();
+        if (/^[A-Z]{2}$/.test(country)) {
+          memoryCachedNetworkCountry = country;
+          if (typeof window !== 'undefined' && window.sessionStorage) {
+            window.sessionStorage.setItem('momly_network_country', country);
+          }
+          return country;
+        }
+      }
     }
-
-    // United States & Canada: America/..., Pacific/Honolulu
-    if (/^(America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Anchorage|Detroit|Indianapolis|Boise|Toronto|Vancouver|Montreal|Edmonton|Winnipeg|Halifax)|Pacific\/Honolulu|US\/|Canada\/)/i.test(tz)) {
-      return 'US_CA';
-    }
-
-    // Generic Americas fallback
-    if (/^America\//i.test(tz)) {
-      return 'US_CA';
-    }
-
-    return 'GLOBAL';
   } catch {
-    return 'GLOBAL';
+    // Non-blocking error handling: falls back to Timezone and Locale instantly
   }
+  return null;
+}
+
+// Background initialization in browser
+if (typeof window !== 'undefined') {
+  probeNetworkCountry().catch(() => {});
+}
+
+/**
+ * Multi-layer crisis region identification engine.
+ * Hierarchy:
+ * Layer 1: Explicit User Setting (momly_crisis_country_override in localStorage / state)
+ * Layer 2: Network IP Geo-location (Cloudflare Edge Trace cached)
+ * Layer 3: IANA Timezone Fingerprint (Intl.DateTimeFormat)
+ * Layer 4: System Locale Region Subtag (navigator.languages)
+ * Layer 5: Universal Global GSM Fallback
+ */
+export function resolveCrisisRegion(signals?: Partial<LocationSignals>): RegionResolutionResult {
+  // Layer 1: Explicit User Setting
+  let userOverride = signals?.userOverride;
+  if (!userOverride && typeof window !== 'undefined' && window.localStorage) {
+    userOverride = window.localStorage.getItem('momly_country_override') || undefined;
+  }
+  if (userOverride) {
+    const clean = userOverride.trim().toUpperCase();
+    if (clean === 'ID') return { region: 'ID', source: 'user_override', countryCode: 'ID', detail: 'User explicit setting: Indonesia' };
+    if (clean === 'IN') return { region: 'IN', source: 'user_override', countryCode: 'IN', detail: 'User explicit setting: India' };
+    if (clean === 'US' || clean === 'CA') return { region: 'US_CA', source: 'user_override', countryCode: clean, detail: 'User explicit setting: US/Canada' };
+    if (clean === 'GB' || clean === 'UK' || clean === 'IE') return { region: 'UK', source: 'user_override', countryCode: clean, detail: 'User explicit setting: UK/Ireland' };
+    if (clean === 'AU' || clean === 'NZ') return { region: 'AU', source: 'user_override', countryCode: clean, detail: 'User explicit setting: Australia/NZ' };
+  }
+
+  // Layer 2: Real-time Network IP Geo Country
+  const netCountry = (signals?.networkCountryCode || memoryCachedNetworkCountry || '').trim().toUpperCase();
+  if (netCountry) {
+    if (netCountry === 'ID') return { region: 'ID', source: 'network_ip', countryCode: 'ID', detail: 'Network IP Country: Indonesia' };
+    if (netCountry === 'IN') return { region: 'IN', source: 'network_ip', countryCode: 'IN', detail: 'Network IP Country: India' };
+    if (netCountry === 'US' || netCountry === 'CA') return { region: 'US_CA', source: 'network_ip', countryCode: netCountry, detail: 'Network IP Country: US/Canada' };
+    if (netCountry === 'GB' || netCountry === 'IE') return { region: 'UK', source: 'network_ip', countryCode: netCountry, detail: 'Network IP Country: UK/Ireland' };
+    if (netCountry === 'AU' || netCountry === 'NZ') return { region: 'AU', source: 'network_ip', countryCode: netCountry, detail: 'Network IP Country: Australia/NZ' };
+    // Known network country outside dedicated regional hubs (e.g. JP, SG, DE, FR)
+    return {
+      region: 'GLOBAL',
+      source: 'network_ip',
+      countryCode: netCountry,
+      detail: `Network IP Country (${netCountry}) -> Global emergency directory`,
+    };
+  }
+
+  // Layer 3: IANA Timezone Fingerprint
+  let tz = signals?.timeZone;
+  if (!tz && typeof Intl !== 'undefined') {
+    try {
+      tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+      // Ignore
+    }
+  }
+  tz = (tz || '').trim();
+
+  if (tz) {
+    // Indonesia
+    if (/(Asia\/(Jakarta|Pontianak|Makassar|Jayapura|Ujung_Pandang))/i.test(tz)) {
+      return { region: 'ID', source: 'timezone', countryCode: 'ID', detail: `Timezone: ${tz}` };
+    }
+    // India
+    if (/(Asia\/(Kolkata|Calcutta))/i.test(tz)) {
+      return { region: 'IN', source: 'timezone', countryCode: 'IN', detail: `Timezone: ${tz}` };
+    }
+    // UK & Ireland
+    if (/^(Europe\/(London|Belfast|Dublin)|GB)/i.test(tz)) {
+      return { region: 'UK', source: 'timezone', countryCode: 'GB', detail: `Timezone: ${tz}` };
+    }
+    // Australia & NZ
+    if (/^(Australia\/|Pacific\/(Auckland|Chatham))/i.test(tz)) {
+      return { region: 'AU', source: 'timezone', countryCode: 'AU', detail: `Timezone: ${tz}` };
+    }
+    // US & Canada
+    if (/^(America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Anchorage|Detroit|Indianapolis|Boise|Toronto|Vancouver|Montreal|Edmonton|Winnipeg|Halifax)|Pacific\/Honolulu|US\/|Canada\/)/i.test(tz)) {
+      return { region: 'US_CA', source: 'timezone', countryCode: 'US', detail: `Timezone: ${tz}` };
+    }
+    // If a specific, recognized timezone is present that is NOT generic UTC/GMT:
+    // This indicates the device is physically located in another country/region (e.g. Asia/Tokyo, Europe/Paris)
+    if (!/^(UTC|Etc\/UTC|Etc\/GMT.*|GMT)$/i.test(tz)) {
+      return {
+        region: 'GLOBAL',
+        source: 'timezone',
+        detail: `Timezone (${tz}) outside specific hubs -> Global emergency directory`,
+      };
+    }
+  }
+
+  // Layer 4: System Locale Region Subtag (navigator.languages)
+  let locales = signals?.localeLanguages;
+  if (!locales && typeof navigator !== 'undefined') {
+    locales = (navigator.languages as string[]) || (navigator.language ? [navigator.language] : []);
+  }
+  if (locales && locales.length > 0) {
+    for (const loc of locales) {
+      const parts = loc.split(/[-_]/);
+      if (parts.length > 1) {
+        const subtag = parts[parts.length - 1].toUpperCase();
+        if (subtag === 'ID') return { region: 'ID', source: 'locale', countryCode: 'ID', detail: `Locale tag: ${loc}` };
+        if (subtag === 'IN') return { region: 'IN', source: 'locale', countryCode: 'IN', detail: `Locale tag: ${loc}` };
+        if (subtag === 'GB' || subtag === 'IE') return { region: 'UK', source: 'locale', countryCode: subtag, detail: `Locale tag: ${loc}` };
+        if (subtag === 'AU' || subtag === 'NZ') return { region: 'AU', source: 'locale', countryCode: subtag, detail: `Locale tag: ${loc}` };
+        if (subtag === 'US' || subtag === 'CA') return { region: 'US_CA', source: 'locale', countryCode: subtag, detail: `Locale tag: ${loc}` };
+      }
+    }
+  }
+
+  // Layer 5: Universal Global Fallback
+  return {
+    region: 'GLOBAL',
+    source: 'global_fallback',
+    detail: 'Universal GSM 112/911 & global helpline directory',
+  };
+}
+
+/**
+ * Convenient wrapper returning just the DetectedCrisisRegion.
+ */
+export function detectCrisisRegion(timeZoneOrSignals?: string | Partial<LocationSignals>): DetectedCrisisRegion {
+  if (typeof timeZoneOrSignals === 'string') {
+    return resolveCrisisRegion({ timeZone: timeZoneOrSignals }).region;
+  }
+  return resolveCrisisRegion(timeZoneOrSignals).region;
 }
 
 // 1. Indonesia (Bahasa Indonesia)
@@ -281,18 +426,21 @@ class SafetyGuardService {
   /**
    * Get the crisis region detected from device timezone.
    */
-  public getDetectedRegion(timeZoneOverride?: string): DetectedCrisisRegion {
-    return detectCrisisRegion(timeZoneOverride);
+  public getDetectedRegion(timeZoneOrSignals?: string | Partial<LocationSignals>): DetectedCrisisRegion {
+    return detectCrisisRegion(timeZoneOrSignals);
   }
 
   /**
    * Resolve appropriate emergency resources based on language and timezone detection.
    */
-  public getEmergencyResources(lang: Language = 'id', timeZoneOverride?: string): EmergencyResource[] {
+  public getEmergencyResources(
+    lang: Language = 'id',
+    timeZoneOrSignals?: string | Partial<LocationSignals>
+  ): EmergencyResource[] {
     if (lang === 'id') {
       return EMERGENCY_RESOURCES_ID;
     }
-    const region = detectCrisisRegion(timeZoneOverride);
+    const region = detectCrisisRegion(timeZoneOrSignals);
     switch (region) {
       case 'ID':
         return EMERGENCY_RESOURCES_EN_ID;
@@ -313,10 +461,18 @@ class SafetyGuardService {
   /**
    * Evaluate user input to determine risk level and emergency escalation requirements.
    */
-  public evaluateInput(rawText: string, lang: Language = 'id', timeZoneOverride?: string): SafetyEvaluation {
+  public evaluateInput(
+    rawText: string,
+    lang: Language = 'id',
+    timeZoneOrSignals?: string | Partial<LocationSignals>
+  ): SafetyEvaluation {
     const text = (rawText || '').toLowerCase().trim();
+    const resolution = typeof timeZoneOrSignals === 'string'
+      ? resolveCrisisRegion({ timeZone: timeZoneOrSignals })
+      : resolveCrisisRegion(timeZoneOrSignals);
 
     const categories: string[] = [];
+    const resources = this.getEmergencyResources(lang, timeZoneOrSignals);
 
     // 1. Check for Harmful Instructions (methods, dosages, poison, weapons)
     const harmfulInstructionPatterns = [
@@ -333,7 +489,9 @@ class SafetyGuardService {
         requiresEmergencyEscalation: true,
         requiresProfessionalReferral: true,
         detectedCategories: categories,
-        emergencyResources: this.getEmergencyResources(lang, timeZoneOverride),
+        emergencyResources: resources,
+        detectedRegion: resolution.region,
+        detectedSource: resolution.source,
       };
     }
 
@@ -353,7 +511,9 @@ class SafetyGuardService {
         requiresEmergencyEscalation: true,
         requiresProfessionalReferral: true,
         detectedCategories: categories,
-        emergencyResources: this.getEmergencyResources(lang, timeZoneOverride),
+        emergencyResources: resources,
+        detectedRegion: resolution.region,
+        detectedSource: resolution.source,
       };
     }
 
@@ -371,7 +531,9 @@ class SafetyGuardService {
         requiresEmergencyEscalation: false,
         requiresProfessionalReferral: true,
         detectedCategories: categories,
-        emergencyResources: this.getEmergencyResources(lang, timeZoneOverride),
+        emergencyResources: resources,
+        detectedRegion: resolution.region,
+        detectedSource: resolution.source,
       };
     }
 
@@ -389,7 +551,9 @@ class SafetyGuardService {
         requiresEmergencyEscalation: false,
         requiresProfessionalReferral: true,
         detectedCategories: categories,
-        emergencyResources: this.getEmergencyResources(lang, timeZoneOverride),
+        emergencyResources: resources,
+        detectedRegion: resolution.region,
+        detectedSource: resolution.source,
       };
     }
 
@@ -406,7 +570,9 @@ class SafetyGuardService {
         requiresEmergencyEscalation: true,
         requiresProfessionalReferral: true,
         detectedCategories: categories,
-        emergencyResources: this.getEmergencyResources(lang, timeZoneOverride),
+        emergencyResources: resources,
+        detectedRegion: resolution.region,
+        detectedSource: resolution.source,
       };
     }
 
@@ -417,6 +583,8 @@ class SafetyGuardService {
       requiresProfessionalReferral: false,
       detectedCategories: [],
       emergencyResources: [],
+      detectedRegion: resolution.region,
+      detectedSource: resolution.source,
     };
   }
 
@@ -428,7 +596,7 @@ class SafetyGuardService {
     riskLevel: RiskLevel,
     lang: Language = 'id',
     displayName: string = 'Mama',
-    timeZoneOverride?: string
+    timeZoneOrSignals?: string | Partial<LocationSignals>
   ): string {
     const isId = lang === 'id';
 
@@ -440,7 +608,7 @@ class SafetyGuardService {
         );
       }
 
-      const region = detectCrisisRegion(timeZoneOverride);
+      const region = detectCrisisRegion(timeZoneOrSignals);
       if (region === 'ID') {
         return (
           `${displayName} love, Momly hears how deeply overwhelmed you are, but I care about your safety too much to ever provide anything that could cause harm. ` +
