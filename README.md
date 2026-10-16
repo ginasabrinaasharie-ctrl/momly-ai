@@ -33,21 +33,21 @@ In Indonesia alone, **68 million mothers** carry invisible emotional burdens; ac
 
 ## 🌟 6 Core Pillars of Maternal Well-being
 
-1. **🎙️ Voice Call Companion (Curhat Hands-Free)**:
+1. **🎙️ Voice Call Companion (Hands-Free Empathetic Voice Chat)**:
    * Talk, don’t type. Momly listens attentively and responds in a gentle, soothing voice with 2-3 sentence conversational turns—preventing cognitive exhaustion at 2 AM.
    * Dynamic avatar emotional states (welcoming, listening, supportive, calm, bestie, understanding) mirroring user emotion in real-time.
-2. **📖 Jurnal Hati (Heart Journal: Gratitude & Micro-Wins)**:
-   * 3 flexible input modalities: ⚡ Quick Chips (*"Si kecil mau makan"*), 🎙️ Voice Recording (*"Hari ini capek tapi..."*), or ✍️ Written Text.
+2. **📖 Heart Journal (Gratitude & Micro-Wins Tracker)**:
+   * 3 flexible input modalities: ⚡ Quick Mood Chips (*"Baby finally ate"*, *"Tired but grateful"*), 🎙️ Voice Recording (*"Exhausted today, but proud of..."*), or ✍️ Written Reflection.
    * Google Gemini Flash automatically parses raw emotion, extracts gratitude items and micro-wins, and crafts an affectionate, personalized validation love note.
-3. **💌 Surat Cinta dari Momly (Post-Call Epistolary Letters & Memory)**:
-   * Epistolary love letters generated after every call session to anchor emotional breakthroughs.
-   * Momly remembers previous conversations so mothers never have to restart from zero or repeatedly re-explain their struggles.
-4. **🫁 Jeda Pernafasan (30s Guided Breathing)**:
-   * 4-4-4 diaphragmatic breathing visualizer featuring an expanding luminous orb and gentle guidance to regulate the parasympathetic nervous system during acute anxiety or panic.
-5. **🌙 Daily Mood Check-In**:
+3. **💌 Love Letters from Momly (Post-Call Reflections & Memory)**:
+   * Epistolary love letters generated after every call session to anchor emotional breakthroughs and provide comfort long after the call ends.
+   * Momly preserves contextual memory of past conversations so mothers never have to restart from zero or repeatedly re-explain their vulnerable moments.
+4. **🫁 Breathing Break (30-Second Guided Calming Breathing)**:
+   * 4-4-4 diaphragmatic breathing visualizer featuring an expanding luminous orb, synchronized audio guidance, and native tactile haptics to regulate the parasympathetic nervous system during acute anxiety or panic.
+5. **🌙 Daily Mood Check-In (Emotional Pulse & Empathy Calibration)**:
    * 5-state emotional pulse tracker (*Overwhelmed, Exhausted, Anxious, Neutral, Joyful*) that calibrates Momly's empathy baseline and tone before a call begins.
-6. **🔐 Google OAuth & Safe Identity**:
-   * Frictionless 1-tap Google Sign-In via Firebase Auth. Protects personal journal entries, securely manages session history and daily quotas, and personalizes support with strict privacy.
+6. **🔐 Google OAuth & Safe Identity (Privacy-First Data Protection)**:
+   * Frictionless 1-tap Google Sign-In via Firebase Auth. Protects personal journal entries, securely manages session history and daily quotas, and personalizes support with strict maternal privacy.
 
 ---
 
@@ -70,7 +70,7 @@ In Indonesia alone, **68 million mothers** carry invisible emotional burdens; ac
 ### Google Cloud Platform & Firebase Infrastructure
 * **⚡ Google Gemini 3.8 Flash (`@google/genai` v1.29.0 SDK)**:
   * Empathetic voice companion reasoning with strict 2-3 sentence response cadence.
-  * Structured JSON schema output generation for Jurnal Hati gratitude extraction.
+  * Structured JSON schema output generation for Heart Journal gratitude extraction.
   * Real-time maternal distress detection and therapeutic de-escalation guardrails.
 * **🔑 Firebase Authentication**:
   * Google OAuth 2.0 Provider (`signInWithPopup`).
@@ -92,38 +92,25 @@ In Indonesia alone, **68 million mothers** carry invisible emotional burdens; ac
 
 ```mermaid
 flowchart TD
-    subgraph Client["Frontend Client & Mobile (React 19 + Capacitor 8 Android & Web PWA)"]
-        Android_Shell["📱 Android Native Shell (@capacitor/android)"]
-        UI_Home["🎙️ Curhat (CallScreen & 1-Tap Voice Avatar)"]
-        Mood["🌙 Daily Mood Check-in"]
-        Breath["🫁 Jeda (30s Guided Breathing Pacer + Native Haptics)"]
-        Journal["📖 Jurnal Hati (Quick Chips / Voice / Text)"]
-        Letters["💌 Surat Cinta (Post-Call Letters & Memories)"]
-        Auth["🔐 Google OAuth (Firebase Auth SDK)"]
-        STT["Audio Engine: Web Speech & Android Mic Focus"]
-        TTS["Audio Speech Playback (TTS Streamer)"]
+    subgraph Client["Frontend Client & Mobile: React 19 + Capacitor 8 Android & Web PWA"]
+        Android_Shell["📱 Android Native Shell"]
+        UI_Home["🎙️ Voice Call Screen & 1-Tap Avatar"]
+        Mood["🌙 Daily Mood Check-In"]
+        Breath["🫁 30s Guided Breathing Pacer"]
+        Journal["📖 Heart Journal: Chips, Voice, Text"]
+        Letters["💌 Love Letters & Session Memory"]
+        Auth["🔐 Google OAuth & Safe Identity"]
+        STT["🎙️ Speech Recognition Engine"]
+        TTS["🔊 Audio Speech Playback"]
     end
 
     subgraph GCP["Google Cloud Platform & Firebase Infrastructure"]
-        Gemini_Flash["⚡ Google Gemini 3.8 Flash (Vertex AI / GenAI SDK)
-• Live Voice Empathy Engine (2-3 sentence cadence)
-• Jurnal Hati Structured JSON Extractor (Gratitude & Wins)
-• Maternal Distress Detection Guardrails"]
-        Firebase_Auth["🔑 Firebase Authentication
-• Google OAuth 2.0 Provider (signInWithPopup)
-• Maternal Identity & Encrypted Session State"]
-        Firebase_Hosting["🌐 Firebase Hosting (Google Global Edge CDN)
-• Sub-50ms Latency & Automated SSL
-• PWA Offline Asset Service Worker"]
-        Firestore["🗄️ Cloud Firestore (Encrypted NoSQL)
-• User Profiles & Daily Quota Logs
-• Jurnal Hati Entries & Surat Cinta Letters
-• Anonymous Distress Telemetry"]
-        Cloud_Run["☁️ Google Cloud Run
-• Containerized Serverless Microservices
-• Quota Guard & Rate Limiting Enforcement"]
-        BigQuery["📊 BigQuery Analytics Pipeline
-• Longitudinal Maternal Distress & Well-being Trends"]
+        Gemini_Flash["⚡ Google Gemini 3.8 Flash<br/>Empathetic Reasoning & Guardrails"]
+        Firebase_Auth["🔑 Firebase Authentication<br/>Google OAuth 2.0 & Secure Session"]
+        Firebase_Hosting["🌐 Firebase Hosting<br/>Global Edge CDN & SSL"]
+        Firestore["🗄️ Cloud Firestore<br/>Encrypted NoSQL Storage"]
+        Cloud_Run["☁️ Google Cloud Run<br/>Serverless Microservices & Quotas"]
+        BigQuery["📊 BigQuery Analytics<br/>Maternal Well-being Trends"]
     end
 
     Auth <-->|OAuth Tokens & Identity| Firebase_Auth
@@ -134,8 +121,8 @@ flowchart TD
     STT -->|Voice Audio Stream + Mood Context| Gemini_Flash
     Gemini_Flash -->|Empathetic Spoken Reply| TTS
     TTS --> UI_Home
-    Journal -->|Multimodal Inputs (Chips/Voice/Text)| Gemini_Flash
-    Gemini_Flash -->|Structured Gratitude, Wins & Validation Note| Journal
+    Journal -->|Multimodal Inputs: Chips, Voice, Text| Gemini_Flash
+    Gemini_Flash -->|Structured Gratitude & Validation Note| Journal
     Journal -->|Sync Encrypted Entry| Firestore
     UI_Home -.->|Post-call Empathy Summary| Letters
     Letters -->|Save Letter & Context| Firestore
@@ -193,14 +180,14 @@ npm run cap:open
 
 ## 📱 Why We Built a Native Android App with Capacitor?
 
-In Indonesia and across Southeast Asia (JAPAC), **over 85% to 90% of mothers rely on Android smartphones**, predominantly on mid-range and entry-level devices. Deploying natively via Capacitor (`@capacitor/android`) delivers critical, life-saving advantages from a mother's perspective:
+In Indonesia and across Southeast Asia (JAPAC), **over 85% to 90% of mothers rely on Android smartphones**, predominantly on mid-range and entry-level devices. Deploying natively via Capacitor (`@capacitor/android`) delivers critical advantages from a mother's perspective:
 
 1. **⚡ 1-Tap Home Screen / Lockscreen Access**:
    * At 2 AM, holding a crying infant with one arm and tears in her eyes, a mother cannot navigate browser tabs, type URLs, or handle browser cookie popups. An Android app icon directly on her home screen provides immediate, 1-tap emotional first-aid.
 2. **🔇 Uninterrupted Background Audio & Mic Focus**:
    * Mobile web browsers aggressively throttle background tabs or suspend microphone access when the screen turns off to save battery. Momly's native Android container manages OS audio focus (`AUDIOFOCUS_GAIN`), allowing continuous hands-free dialogue even when the phone screen dims in a dark nursery.
-3. **📳 Tactile Haptic Pacing for Breathing Space**:
-   * In the 30-second Breathing Space, native Android haptics gently vibrate in a 4-4-4 diaphragmatic rhythm. An exhausted mother with tired eyes in a dark room can close her eyes and simply feel the calming rhythm in her palm.
+3. **📳 Tactile Haptic Pacing for Breathing Break**:
+   * In the 30-second Breathing Break, native Android haptics gently vibrate in a 4-4-4 diaphragmatic rhythm. An exhausted mother with tired eyes in a dark room can close her eyes and simply feel the calming rhythm in her palm.
 4. **🌐 Digital Inclusion & Low-Spec Performance (UN SDG 10)**:
    * Optimized bundle footprint (<15 MB APK) and efficient memory usage ensure smooth 60 FPS performance even on budget Android devices with limited RAM.
 5. **⚙️ Single-Codebase Engineering Velocity**:
