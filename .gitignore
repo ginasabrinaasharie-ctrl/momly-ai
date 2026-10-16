@@ -31,3 +31,7 @@ dist-ssr
 service-account*.json
 firebase-key*.json
 credentials.json
+
+# Local presentation & pitch deck assets (Private)
+momly_deck.html
+*deck*.html

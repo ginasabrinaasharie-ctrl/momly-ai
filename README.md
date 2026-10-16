@@ -184,7 +184,7 @@ Live production build is automatically deployed to `https://momly-ai-companion.w
 * **Primary AI Engine**: Google Gemini 3.8 Flash (`@google/genai` SDK)
 * **Cloud Infrastructure**: Firebase Hosting (Google Global Edge CDN) + Cloud Firestore + Firebase Authentication + Cloud Run + BigQuery
 * **Working Prototype Link**: [https://momly-ai-companion.web.app](https://momly-ai-companion.web.app)
-* **Pitch Deck**: Prepared using the official Hack2skill prescribed template ([momly_deck.html](./momly_deck.html))
+* **Pitch Deck**: Prepared using the official Hack2skill prescribed template (Official Pitch Deck by Nexora Team)
 * **Video Demonstration**: 3 to 4-minute end-to-end working solution walkthrough
 
 ---
