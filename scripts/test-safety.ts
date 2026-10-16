@@ -20,7 +20,7 @@ try {
   // Ignore
 }
 
-import { safetyGuard, OFFICIAL_SAFETY_DISCLAIMER } from '../src/services/safetyGuard.ts';
+import { safetyGuard, detectCrisisRegion, OFFICIAL_SAFETY_DISCLAIMER } from '../src/services/safetyGuard.ts';
 import type { SafetyEvaluation, RiskLevel } from '../src/services/safetyGuard.ts';
 import { GeminiCompanionService } from '../src/services/geminiVoiceCompanion.ts';
 
@@ -294,6 +294,75 @@ async function runSafetyVerificationSuite() {
   } else {
     failedTests++;
     console.log(`❌ RESULT : FAILED (Failed to sanitize dangerous model output)`);
+  }
+
+  // Unit Test: Timezone-Aware Regional Crisis Escalation
+  console.log(`\n------------------------------------------------------------`);
+  console.log(`[TEST SAFE-10] Timezone-Aware Regional Crisis Resolution (ID, US/CA, UK, AU, GLOBAL)`);
+  totalTests++;
+
+  let timezoneTestsPassed = true;
+
+  // 1. English speaker in Indonesia (Asia/Jakarta)
+  const regId = detectCrisisRegion('Asia/Jakarta');
+  const resId = safetyGuard.getEmergencyResources('en', 'Asia/Jakarta');
+  const fallbackId = safetyGuard.generateDeterministicIntervention('CRITICAL_IMMINENT', 'en', 'Mama', 'Asia/Jakarta');
+  console.log(`Region for 'Asia/Jakarta' : ${regId} (Expected: ID)`);
+  console.log(`Top contact for ID in EN : ${resId[0]?.numberOrContact} (${resId[0]?.name})`);
+  if (regId !== 'ID' || !resId.some((r) => r.numberOrContact === '112') || !fallbackId.includes('112')) {
+    console.error('❌ FAILED: Regional resolution for Indonesia failed');
+    timezoneTestsPassed = false;
+  }
+
+  // 2. English speaker in US/Canada (America/New_York)
+  const regUs = detectCrisisRegion('America/New_York');
+  const resUs = safetyGuard.getEmergencyResources('en', 'America/New_York');
+  const fallbackUs = safetyGuard.generateDeterministicIntervention('CRITICAL_IMMINENT', 'en', 'Mama', 'America/New_York');
+  console.log(`Region for 'America/New_York': ${regUs} (Expected: US_CA)`);
+  console.log(`Top contact for US_CA   : ${resUs[0]?.numberOrContact} (${resUs[0]?.name})`);
+  if (regUs !== 'US_CA' || !resUs.some((r) => r.numberOrContact === '988') || !fallbackUs.includes('988')) {
+    console.error('❌ FAILED: Regional resolution for US/Canada failed');
+    timezoneTestsPassed = false;
+  }
+
+  // 3. English speaker in United Kingdom (Europe/London)
+  const regUk = detectCrisisRegion('Europe/London');
+  const resUk = safetyGuard.getEmergencyResources('en', 'Europe/London');
+  const fallbackUk = safetyGuard.generateDeterministicIntervention('CRITICAL_IMMINENT', 'en', 'Mama', 'Europe/London');
+  console.log(`Region for 'Europe/London'  : ${regUk} (Expected: UK)`);
+  console.log(`Top contact for UK      : ${resUk[0]?.numberOrContact} (${resUk[0]?.name})`);
+  if (regUk !== 'UK' || !resUk.some((r) => r.numberOrContact === '999') || !fallbackUk.includes('999')) {
+    console.error('❌ FAILED: Regional resolution for UK failed');
+    timezoneTestsPassed = false;
+  }
+
+  // 4. English speaker in Australia (Australia/Sydney)
+  const regAu = detectCrisisRegion('Australia/Sydney');
+  const resAu = safetyGuard.getEmergencyResources('en', 'Australia/Sydney');
+  const fallbackAu = safetyGuard.generateDeterministicIntervention('CRITICAL_IMMINENT', 'en', 'Mama', 'Australia/Sydney');
+  console.log(`Region for 'Australia/Sydney': ${regAu} (Expected: AU)`);
+  console.log(`Top contact for AU      : ${resAu[0]?.numberOrContact} (${resAu[0]?.name})`);
+  if (regAu !== 'AU' || !resAu.some((r) => r.numberOrContact === '000') || !fallbackAu.includes('000')) {
+    console.error('❌ FAILED: Regional resolution for Australia failed');
+    timezoneTestsPassed = false;
+  }
+
+  // 5. Global Fallback (Asia/Tokyo)
+  const regGlobal = detectCrisisRegion('Asia/Tokyo');
+  const resGlobal = safetyGuard.getEmergencyResources('en', 'Asia/Tokyo');
+  console.log(`Region for 'Asia/Tokyo'     : ${regGlobal} (Expected: GLOBAL)`);
+  console.log(`Top contact for GLOBAL  : ${resGlobal[0]?.numberOrContact} (${resGlobal[0]?.name})`);
+  if (regGlobal !== 'GLOBAL' || !resGlobal.some((r) => r.name.includes('Universal') || r.actionUrl?.includes('findahelpline'))) {
+    console.error('❌ FAILED: Global fallback resolution failed');
+    timezoneTestsPassed = false;
+  }
+
+  if (timezoneTestsPassed) {
+    passedTests++;
+    console.log(`✅ RESULT : PASSED (Timezone-Aware Crisis Localization verified for ID, US/CA, UK, AU, and GLOBAL)`);
+  } else {
+    failedTests++;
+    console.log(`❌ RESULT : FAILED (Timezone-Aware Crisis Localization failed)`);
   }
 
   console.log(`\n${'='.repeat(70)}`);

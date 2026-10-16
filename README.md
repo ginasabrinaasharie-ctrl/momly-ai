@@ -31,23 +31,29 @@ In Indonesia alone, **68 million mothers** carry invisible emotional burdens; ac
 
 ---
 
-## 🌟 6 Core Pillars of Maternal Well-being
+## 🌟 Core Pillars of Maternal Well-being
 
-1. **🎙️ Voice Call Companion (Hands-Free Empathetic Voice Chat)**:
-   * Talk, don’t type. Momly listens attentively and responds in a gentle, soothing voice with 2-3 sentence conversational turns—preventing cognitive exhaustion at 2 AM.
-   * Dynamic avatar emotional states (welcoming, listening, supportive, calm, bestie, understanding) mirroring user emotion in real-time.
+1. **🎙️ Neural Voice Companion (Hands-Free Empathetic Voice Chat)**:
+   * Talk, don’t type. Momly listens attentively and responds in a gentle, soothing voice powered by **Google Gemini 3.8 Flash TTS** (utilizing the warm, resonant **"Tova"** voice at temperature 1.25) with 2-3 sentence conversational turns—preventing cognitive exhaustion at 2 AM.
+   * Real-time Speech Deduplication Algorithm (`cleanDuplicateSpeech`): Eliminates word/phrase repetition glitches from mobile speech recognizers.
+   * Dynamic avatar emotional states (welcoming, listening, speaking, supportive, calm, bestie, understanding, sympathetic) mirroring user emotion in real-time.
 2. **📖 Heart Journal (Gratitude & Micro-Wins Tracker)**:
    * 3 flexible input modalities: ⚡ Quick Mood Chips (*"Baby finally ate"*, *"Tired but grateful"*), 🎙️ Voice Recording (*"Exhausted today, but proud of..."*), or ✍️ Written Reflection.
-   * Google Gemini Flash automatically parses raw emotion, extracts gratitude items and micro-wins, and crafts an affectionate, personalized validation love note.
+   * Google Gemini 3.8 Flash automatically parses raw emotion, extracts structured gratitude items and micro-wins, and crafts an affectionate, personalized validation love note.
 3. **💌 Love Letters from Momly (Post-Call Reflections & Memory)**:
    * Epistolary love letters generated after every call session to anchor emotional breakthroughs and provide comfort long after the call ends.
    * Momly preserves contextual memory of past conversations so mothers never have to restart from zero or repeatedly re-explain their vulnerable moments.
-4. **🫁 Breathing Break (30-Second Guided Calming Breathing)**:
-   * 4-4-4 diaphragmatic breathing visualizer featuring an expanding luminous orb, synchronized audio guidance, and native tactile haptics to regulate the parasympathetic nervous system during acute anxiety or panic.
+4. **🫁 Breathing Space (30-Second Guided Calming Breathing)**:
+   * 4-4-4 diaphragmatic breathing visualizer featuring an expanding luminous orb, synchronized audio guidance, and native tactile haptics on Android to regulate the parasympathetic nervous system during acute anxiety or panic.
 5. **🌙 Daily Mood Check-In (Emotional Pulse & Empathy Calibration)**:
    * 5-state emotional pulse tracker (*Overwhelmed, Exhausted, Anxious, Neutral, Joyful*) that calibrates Momly's empathy baseline and tone before a call begins.
-6. **🔐 Google OAuth & Safe Identity (Privacy-First Data Protection)**:
-   * Frictionless 1-tap Google Sign-In via Firebase Auth. Protects personal journal entries, securely manages session history and daily quotas, and personalizes support with strict maternal privacy.
+6. **🛡️ AI Safety Guardrails & Maternal Crisis Escalation**:
+   * Multi-tier risk classifier (`CRITICAL_IMMINENT`, `HARMFUL_INSTRUCTION`, `DIAGNOSTIC_QUERY`, `SEVERE_DISTRESS`, `MEDICAL_CONCERN`) with zero-latency (<5ms) deterministic interlock.
+   * Immediate escalation to official emergency hotlines: **Layanan Kesehatan Jiwa Kemenkes SEJIWA (119 ekstensi 8)**, Layanan Darurat Nasional (112), Into The Light, Yayasan Pulih, dan Hotline Global 988/911.
+   * Strict adherence to non-clinical AI ethics: Momly provides peer listening, explicitly declining to diagnose clinical depression or predict suicide risk.
+7. **🔐 Multi-Method Authentication & 1-Click Judge Demo**:
+   * Official Google OAuth 2.0 Provider (`signInWithPopup`) and robust Firebase Email & Password authentication.
+   * **⭐ 1-Click Instant Judge Demo Mode**: Hackathon judges can evaluate the full prototype in 1 click without typing passwords or registration friction.
 
 ---
 
@@ -56,25 +62,25 @@ In Indonesia alone, **68 million mothers** carry invisible emotional burdens; ac
 ### Frontend & Mobile Experience
 * **Framework**: React 19 + TypeScript + Vite
 * **Native Mobile Shell**: Capacitor 8 (`@capacitor/android`, `@capacitor/core`, `com.momly.ai`)
-* **Styling**: Tailwind CSS v4 (Glassmorphism, warm maternal color palette, fluid micro-interactions)
+* **Styling**: Tailwind CSS v4 (Glassmorphism, warm maternal color palette, fluid micro-interactions, sticky docked navigation)
 * **Icons & Visuals**: Lucide React + Custom Emotionally-Expressive Avatars
 * **Audio & Speech Engine**:
-  * Web Speech Recognition API (continuous STT)
+  * Google Gemini 3.8 Flash TTS (`gemini-3.8-flash-tts` with voice "Tova", temp 1.25)
+  * Web Speech Recognition API (continuous STT) with Speech Deduplication
   * Web Audio API (AnalyserNode volume & frequency visualizer)
-  * MediaRecorder (audio chunk recording & fallback)
-  * HTML5 Audio & SpeechSynthesis (low-latency conversational playback)
   * Android Audio Session Focus (`AUDIOFOCUS_GAIN` prevention of background sleep)
   * Android Native Haptics (tactile vibration pacing for breathing)
 * **Deployment**: Web PWA (Firebase Hosting) + Native Android APK (`npm run cap:sync`)
 
 ### Google Cloud Platform & Firebase Infrastructure
 * **⚡ Google Gemini 3.8 Flash (`@google/genai` v1.29.0 SDK)**:
-  * Empathetic voice companion reasoning with strict 2-3 sentence response cadence.
-  * Structured JSON schema output generation for Heart Journal gratitude extraction.
+  * Dual Intelligence Engine: Empathetic voice companion reasoning + structured JSON schema extraction.
   * Real-time maternal distress detection and therapeutic de-escalation guardrails.
+  * Specialized Neural Audio: High-fidelity voice streaming via Gemini Flash TTS.
 * **🔑 Firebase Authentication**:
   * Google OAuth 2.0 Provider (`signInWithPopup`).
-  * Frictionless 1-tap authentication preserving user identity across devices.
+  * Email & Password authentication with validation and error recovery.
+  * Frictionless 1-Click Judge Demo session management.
 * **🌐 Firebase Hosting**:
   * Global Google Edge CDN delivering sub-50ms latency.
   * Automated SSL/HTTPS certificates enabling seamless microphone permissions across iOS Safari and Android Chrome.

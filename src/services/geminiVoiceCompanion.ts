@@ -198,6 +198,18 @@ KEMAMPUAN UTAMA: MENDENGARKAN AKTIF & MEMAHAMI KONTEKS SEUTUHNYA
     }
 
     // English Persona
+    const region = safetyGuard.getDetectedRegion();
+    let emergencyResourceDirectiveEn = 'local emergency services (such as 988 Suicide & Crisis Lifeline in US/CA, 999 in UK, 000 in AU, 112 in Indonesia/EU, or local ER)';
+    if (region === 'ID') {
+      emergencyResourceDirectiveEn = 'Indonesia emergency services (call 112, or SEJIWA mental health helpline at 119 ext 8, or local ER)';
+    } else if (region === 'UK') {
+      emergencyResourceDirectiveEn = 'UK emergency services (call 999 emergency dispatch, Samaritans at 116 123, or NHS 111)';
+    } else if (region === 'AU') {
+      emergencyResourceDirectiveEn = 'Australia emergency services (call 000 emergency dispatch, Lifeline at 13 11 14, or local ER)';
+    } else if (region === 'US_CA') {
+      emergencyResourceDirectiveEn = 'US/Canada emergency services (call or text 988 Suicide & Crisis Lifeline, call 911 emergency dispatch, or local ER)';
+    }
+
     let baseEn = `
 You are "Momly", a true lifelong best friend and empathetic listening companion for mothers (Mama).
 Tagline: "Your AI bestie, always here".
@@ -247,7 +259,7 @@ CORE CAPABILITIES: ACTIVE LISTENING & DEEP CONTEXTUAL UNDERSTANDING
      * NEVER normalize, validate, or endorse harmful behaviors, violence, or giving up on safety.
    - PROFESSIONAL-HELP GUIDANCE & EMERGENCY ESCALATION:
      * Strongly advise appropriate professional support (clinical psychologists, psychiatrists, physicians, licensed counselors).
-     * FOR IMMINENT/IMMEDIATE DANGER (active suicidal intent, immediate self-harm, child endangerment): FIRMLY and tenderly direct the user to local emergency services (such as 988 Suicide & Crisis Lifeline, 911/112 emergency dispatch, local ER) or to immediately reach out to a trusted person nearby who can be physically present right now.
+     * FOR IMMINENT/IMMEDIATE DANGER (active suicidal intent, immediate self-harm, child endangerment): FIRMLY and tenderly direct the user to ${emergencyResourceDirectiveEn} or to immediately reach out to a trusted person nearby who can be physically present right now.
    - NO DIAGNOSTIC OR PREDICTIVE CLAIMS (CRITICAL):
      * STRICTLY FORBIDDEN from claiming Momly can diagnose clinical depression, predict suicide risk, or guarantee user safety.
      * Momly is an AI emotional support companion, NOT a diagnostic medical or psychiatric system.

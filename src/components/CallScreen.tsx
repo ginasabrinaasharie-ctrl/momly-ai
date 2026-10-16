@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, PhoneOff, Volume2, VolumeX, Sparkles, MessageSquareHeart, Send, ShieldAlert, PhoneCall } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, Volume2, VolumeX, Sparkles, MessageSquareHeart, Send, ShieldAlert, PhoneCall, ExternalLink } from 'lucide-react';
 import { speechService } from '../services/speechService.ts';
 import { geminiCompanion } from '../services/geminiVoiceCompanion.ts';
 import { usageGuard } from '../services/usageGuard.ts';
@@ -645,19 +645,23 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
                   ? 'Mama tidak sendirian. Jika sedang dalam krisis, bahaya, atau membutuhkan pertolongan segera, mohon hubungi layanan bantuan resmi berikut atau orang terdekat:'
                   : 'You are not alone. If you are experiencing crisis, acute distress, or danger, please contact official resources or a trusted person nearby:'}
               </p>
-              <div className="grid grid-cols-2 gap-1.5 mb-2">
-                {safetyAlert.emergencyResources.slice(0, 2).map((res, idx) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-2">
+                {safetyAlert.emergencyResources.slice(0, 4).map((res, idx) => (
                   <a
                     key={idx}
                     href={res.actionUrl || '#'}
                     target={res.actionUrl?.startsWith('http') ? '_blank' : '_self'}
                     rel="noreferrer"
-                    className="flex items-center gap-1.5 p-2 rounded-xl bg-rose-900/60 hover:bg-rose-800/80 border border-rose-400/30 text-white text-xs font-semibold transition-all"
+                    className="flex items-center gap-1.5 p-2 rounded-xl bg-rose-900/60 hover:bg-rose-800/80 border border-rose-400/30 text-white text-xs font-semibold transition-all active:scale-[0.98]"
                   >
-                    <PhoneCall className="w-3.5 h-3.5 text-rose-300 shrink-0" />
+                    {res.actionUrl?.startsWith('http') ? (
+                      <ExternalLink className="w-3.5 h-3.5 text-rose-300 shrink-0" />
+                    ) : (
+                      <PhoneCall className="w-3.5 h-3.5 text-rose-300 shrink-0" />
+                    )}
                     <div className="truncate">
                       <div className="text-[10px] text-rose-200/80 truncate">{res.name}</div>
-                      <div className="font-bold text-white text-[11px]">{res.numberOrContact}</div>
+                      <div className="font-bold text-white text-[11px] truncate">{res.numberOrContact}</div>
                     </div>
                   </a>
                 ))}
