@@ -202,6 +202,8 @@ KEMAMPUAN UTAMA: MENDENGARKAN AKTIF & MEMAHAMI KONTEKS SEUTUHNYA
     let emergencyResourceDirectiveEn = 'local emergency services (such as 988 Suicide & Crisis Lifeline in US/CA, 999 in UK, 000 in AU, 112 in Indonesia/EU, or local ER)';
     if (region === 'ID') {
       emergencyResourceDirectiveEn = 'Indonesia emergency services (call 112, or SEJIWA mental health helpline at 119 ext 8, or local ER)';
+    } else if (region === 'IN') {
+      emergencyResourceDirectiveEn = 'India emergency services (call 112, or Tele-MANAS mental health helpline at 14416 / 1800-891-4416, or local ER)';
     } else if (region === 'UK') {
       emergencyResourceDirectiveEn = 'UK emergency services (call 999 emergency dispatch, Samaritans at 116 123, or NHS 111)';
     } else if (region === 'AU') {

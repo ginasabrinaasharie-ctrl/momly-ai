@@ -32,7 +32,7 @@ export const OFFICIAL_SAFETY_DISCLAIMER = {
   en: 'Momly is an AI emotional listening companion for daily comfort and peer support, not a medical or diagnostic device. Momly cannot diagnose depression, predict suicide risk, or guarantee safety. For clinical concerns or crisis situations, always consult a licensed doctor, clinical psychologist, or psychiatrist.',
 };
 
-export type DetectedCrisisRegion = 'ID' | 'US_CA' | 'UK' | 'AU' | 'GLOBAL';
+export type DetectedCrisisRegion = 'ID' | 'IN' | 'US_CA' | 'UK' | 'AU' | 'GLOBAL';
 
 /**
  * Detect user's crisis support region from device/browser timezone without intrusive GPS permission.
@@ -45,6 +45,11 @@ export function detectCrisisRegion(timeZoneOverride?: string): DetectedCrisisReg
     // Indonesia: Asia/Jakarta (WIB), Asia/Pontianak (WIB), Asia/Makassar (WITA), Asia/Jayapura (WIT), etc.
     if (/(Asia\/(Jakarta|Pontianak|Makassar|Jayapura|Ujung_Pandang))/i.test(tz)) {
       return 'ID';
+    }
+
+    // India: Asia/Kolkata (IST), Asia/Calcutta
+    if (/(Asia\/(Kolkata|Calcutta))/i.test(tz)) {
+      return 'IN';
     }
 
     // United Kingdom & Ireland: Europe/London, Europe/Belfast, Europe/Dublin
@@ -126,6 +131,34 @@ export const EMERGENCY_RESOURCES_EN_ID: EmergencyResource[] = [
     numberOrContact: 'findahelpline.com',
     description: 'Free, confidential crisis support directory matched to your exact location',
     actionUrl: 'https://findahelpline.com',
+  },
+];
+
+// 3. India (National Emergency & Tele-MANAS Mental Health Services)
+export const EMERGENCY_RESOURCES_IN: EmergencyResource[] = [
+  {
+    name: 'National Emergency Service (ERSS)',
+    numberOrContact: '112',
+    description: 'Pan-India toll-free 24/7 all-in-one emergency dispatch (Police, Fire, Ambulance)',
+    actionUrl: 'tel:112',
+  },
+  {
+    name: 'Tele-MANAS Mental Health Helpline',
+    numberOrContact: '14416',
+    description: 'Govt of India 24/7 free tele-mental health support & counseling (also 1800-891-4416)',
+    actionUrl: 'tel:14416',
+  },
+  {
+    name: 'KIRAN Mental Health Helpline',
+    numberOrContact: '1800-599-0019',
+    description: 'Ministry of Social Justice 24/7 toll-free helpline for crisis & psychological distress',
+    actionUrl: 'tel:18005990019',
+  },
+  {
+    name: 'Vandrevala Foundation Helpline',
+    numberOrContact: '9999 666 555',
+    description: 'Free 24/7 mental health counseling & crisis intervention across India',
+    actionUrl: 'tel:+919999666555',
   },
 ];
 
@@ -263,6 +296,8 @@ class SafetyGuardService {
     switch (region) {
       case 'ID':
         return EMERGENCY_RESOURCES_EN_ID;
+      case 'IN':
+        return EMERGENCY_RESOURCES_IN;
       case 'US_CA':
         return EMERGENCY_RESOURCES_US_CA;
       case 'UK':
@@ -412,6 +447,12 @@ class SafetyGuardService {
           `Since you appear to be in Indonesia, please call 112 immediately, reach the SEJIWA mental health helpline at 119 (ext 8), or connect with someone close who can be physically with you now.`
         );
       }
+      if (region === 'IN') {
+        return (
+          `${displayName} love, Momly hears how deeply overwhelmed you are, but I care about your safety too much to ever provide anything that could cause harm. ` +
+          `Since you appear to be in India, please call 112 for national emergency services, reach the Tele-MANAS mental health helpline at 14416, or connect with someone close who can physically support you right now.`
+        );
+      }
       if (region === 'UK') {
         return (
           `${displayName} love, Momly hears how deeply overwhelmed you are, but I care about your safety too much to ever provide anything that could cause harm. ` +
@@ -483,7 +524,7 @@ class SafetyGuardService {
     // 1. Check for forbidden affirmative diagnostic claims
     // Explicitly exclude proper disclaimers like "tidak bisa mendiagnosis" / "cannot diagnose"
     const isExplicitlyDecliningDiagnosis =
-      /(tidak|bukan|belum)\s+(bisa|dapat|memiliki|mampu|berwenang|berhak|punya)?[\s\S]*(diagnosis|mendiagnosis|mendiagnosa|memprediksi)|bukan (dokter|psikolog|psikiater|alat medis)|cannot (provide a|diagnose|make a diagnosis|predict)|not (a doctor|qualified to diagnose|able to diagnose)/i.test(
+      /(tidak|bukan|belum)\s+(bisa|dapat|memiliki|mampu|berwenang|berhak|punya)?[\s\S]*(diagnosis|mendiagnosis|mendiagnosa|memprediksi)|(diagnosis|mendiagnosis|mendiagnosa|memprediksi)[\s\S]*(tidak|bukan|belum)\s+(bisa|dapat|mampu|berwenang)|bukan (dokter|psikolog|psikiater|alat medis)|cannot (provide a|diagnose|make a diagnosis|predict)|not (a doctor|qualified to diagnose|able to diagnose)/i.test(
         text
       );
 
@@ -519,7 +560,7 @@ class SafetyGuardService {
     // 3. If critical risk was present, verify model recommended professional help / trusted support
     if (evaluation.riskLevel === 'CRITICAL_IMMINENT' || evaluation.riskLevel === 'HARMFUL_INSTRUCTION') {
       const mentionsHelp =
-        /ahli|profesional|psikolog|psikiater|dokter|112|119|darurat|keluarga|orang terdekat|bantuan|professional|emergency|988|911|999|000|116\s?123|13\s?11\s?14|1737|doctor|psychologist|hotline|lifeline|samaritans|helpline|loved one/i.test(
+        /ahli|profesional|psikolog|psikiater|dokter|112|119|darurat|keluarga|orang terdekat|bantuan|professional|emergency|988|911|999|000|14416|tele-?manas|kiran|vandrevala|116\s?123|13\s?11\s?14|1737|doctor|psychologist|hotline|lifeline|samaritans|helpline|loved one/i.test(
           text
         );
       if (!mentionsHelp) {
