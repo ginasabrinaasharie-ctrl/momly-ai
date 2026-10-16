@@ -81,6 +81,7 @@ export class GeminiCompanionService {
 
   private extractNickname(name?: string): string {
     if (!name) return 'Mama';
+    if (/judge|juri/i.test(name)) return 'Judges';
     const clean = name.trim().replace(/^(mama|ibu|bunda)\s+/i, '').trim();
     const firstWord = clean.split(/\s+/)[0] || 'Mama';
     return firstWord;
@@ -89,7 +90,12 @@ export class GeminiCompanionService {
   private buildSystemInstruction(): string {
     const isIndonesian = this.language === 'id';
     const nickname = this.userName ? this.extractNickname(this.userName) : 'Mama';
-    const displayName = nickname.toLowerCase().startsWith('mama') ? nickname : `Mama ${nickname}`;
+    const isJudge = /judge/i.test(nickname);
+    const displayName = isJudge
+      ? 'Judges'
+      : nickname.toLowerCase().startsWith('mama')
+      ? nickname
+      : `Mama ${nickname}`;
 
     if (isIndonesian) {
       let base = `

@@ -41,10 +41,10 @@ class UsageGuardService {
     return !!this.getCurrentUser();
   }
 
-  public loginAsJudge(customName: string = 'Juri AI Builder Cup'): AuthUser {
+  public loginAsJudge(customName: string = 'Judges'): AuthUser {
     const judgeUser: AuthUser = {
       id: `judge-${Date.now()}`,
-      name: customName.trim() || 'Juri AI Builder Cup',
+      name: customName.trim() || 'Judges',
       role: 'judge',
       authProvider: 'demo_bypass',
     };

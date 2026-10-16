@@ -57,7 +57,7 @@ export const MoodCheckIn: React.FC<MoodCheckInProps> = ({
             >
               <span className="text-xl sm:text-2xl mb-1 select-none">{mood.emoji}</span>
               <span
-                className={`text-[9.5px] sm:text-[10px] font-semibold leading-[1.2] text-center w-full break-words ${
+                className={`text-[9px] sm:text-[10px] font-semibold leading-tight text-center w-full hyphens-none tracking-tight ${
                   isSelected ? 'text-[#F07B6B]' : 'text-slate-600'
                 }`}
               >

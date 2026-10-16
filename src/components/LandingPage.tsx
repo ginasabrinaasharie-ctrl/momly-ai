@@ -7,7 +7,6 @@ import {
   ShieldCheck,
   ArrowRight,
   Globe,
-  Volume2,
 } from 'lucide-react';
 import { MomlyAvatar } from './MomlyAvatar.tsx';
 import { Language } from '../services/i18n.ts';
@@ -98,33 +97,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 : 'A warm, judgment-free sanctuary to release exhaustion, share unspoken worries via natural voice calls, and restore your inner peace.'}
             </p>
 
-            {/* Teaser Voice Greeting Card */}
-            <div className="relative p-4 rounded-3xl bg-gradient-to-br from-[#FFF5F3] via-white to-[#F8F5FF] border border-[#FDDDD8] shadow-md text-left overflow-hidden">
-              <div className="flex items-center gap-3 mb-2.5">
-                <div className="relative">
-                  <MomlyAvatar size="md" pose="welcoming" isSpeaking={true} />
-                  <span className="absolute -bottom-1 -right-1 p-1 bg-white rounded-full shadow-xs">
-                    <Volume2 className="w-3 h-3 text-[#F07B6B] animate-pulse" />
-                  </span>
-                </div>
-                <div>
-                  <h2 className="text-xs font-bold text-[#1C1228] flex items-center gap-1">
-                    <span>Momly</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-[#EEE8FF] text-[#6B5FA0] font-semibold">
-                      Your AI Bestie
-                    </span>
-                  </h2>
-                  <p className="text-[10px] text-slate-500">
-                    {isId ? 'Siap mendengarkan kapan saja' : 'Always here to listen to you'}
+            {/* Gentle Greeting Preview */}
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-[#FFF5F3] to-[#F8F5FF] border border-[#FDDDD8] text-left">
+              <div className="flex items-center gap-2.5">
+                <MomlyAvatar size="sm" pose="welcoming" isSpeaking={false} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] italic text-slate-700 leading-snug">
+                    {isId
+                      ? '"Halo Mama sayang... apa yang paling bikin Mama lelah atau tersenyum hari ini? Ceritain ke Momly yuk 🌸"'
+                      : '"Hi Mama love... what brought warmth or fatigue to your heart today? Tell me everything, I am right here listening 🌸"'}
                   </p>
                 </div>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-white/80 border border-[#FDDDD8]/60 text-xs italic text-slate-700 leading-relaxed relative">
-                <span className="absolute -top-2 left-3 text-base">💬</span>
-                {isId
-                  ? '"Halo Mama sayang... apa yang paling bikin Mama lelah atau tersenyum hari ini? Ceritain ke Momly yuk, Momly dengerin."'
-                  : '"Hi Mama love... what brought warmth or fatigue to your heart today? Tell me everything, I am right here listening."'}
               </div>
             </div>
 
@@ -142,7 +125,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 onClick={onDemoJudge}
                 className="w-full py-2.5 px-4 rounded-2xl bg-amber-50 hover:bg-amber-100/80 active:scale-98 border border-amber-300 text-amber-900 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-2xs"
               >
-                <span>⭐ {isId ? 'Akses Cepat Mode Juri (1-Klik Tanpa Password)' : 'Quick 1-Click Judge Demo Mode'}</span>
+                <span>⭐ {isId ? 'Akses Cepat Mode Judges (1-Klik Tanpa Password)' : 'Quick 1-Click Judges Demo Mode'}</span>
               </button>
             </div>
           </section>

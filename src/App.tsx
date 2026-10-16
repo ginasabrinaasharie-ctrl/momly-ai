@@ -33,6 +33,7 @@ import { JournalEntry } from './types/journal.ts';
 
 const extractNickname = (name?: string): string => {
   if (!name) return 'Mama';
+  if (/judge|juri/i.test(name)) return 'Judges';
   const clean = name.trim().replace(/^(mama|ibu|bunda)\s+/i, '').trim();
   const firstWord = clean.split(/\s+/)[0] || 'Mama';
   return firstWord;
@@ -319,14 +320,19 @@ export function App() {
         
         {/* Top Mobile App Header */}
         <header className="w-full border-b border-[#FDDDD8]/80 bg-white/95 backdrop-blur-md sticky top-0 z-40 px-3 py-2.5 flex items-center justify-between gap-1.5">
-          <div className="flex items-center gap-1.5 shrink-0 min-w-0">
+          <button
+            type="button"
+            onClick={() => setActiveTab('home')}
+            className="flex items-center gap-1.5 shrink-0 min-w-0 cursor-pointer hover:opacity-85 active:scale-98 transition-all"
+            title={lang === 'id' ? 'Kembali ke Beranda' : 'Return to Home'}
+          >
             <MomlyAvatar size="sm" pose="winking" />
             <img
               src="/assets/momly/logo.png"
               alt="Momly - Your AI bestie, always here"
               className="h-7 sm:h-8 w-auto object-contain shrink-0"
             />
-          </div>
+          </button>
 
           <div className="flex items-center gap-1.5 shrink-0">
             {/* User Profile / Nickname Pill */}
@@ -354,7 +360,7 @@ export function App() {
               )}
               <span className="font-bold text-[10px] sm:text-[11px] truncate">
                 {currentUser?.role === 'judge'
-                  ? (lang === 'id' ? 'Mode Juri' : 'Judge Mode')
+                  ? 'Judges Mode ⭐'
                   : (userName ? `Mama ${userName}` : 'Mama')}
               </span>
               <Edit3 className="w-2.5 h-2.5 text-slate-400 shrink-0" />
@@ -403,12 +409,26 @@ export function App() {
                     : 'Small steps still make a big difference. I’m proud of you, Mama 🌸'}
                 </p>
               </div>
-              <MomlyAvatar size="md" pose="bestie" className="shrink-0" />
+              <button
+                type="button"
+                onClick={() => setActiveTab('home')}
+                className="cursor-pointer hover:scale-105 active:scale-95 transition-transform shrink-0"
+                title={lang === 'id' ? 'Kembali ke Beranda' : 'Return to Home'}
+              >
+                <MomlyAvatar size="md" pose="bestie" />
+              </button>
             </div>
             {/* Hero Headline */}
             <div className="mb-4">
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1C1228] leading-tight mb-2">
-                {userName ? (
+                {currentUser?.role === 'judge' ? (
+                  <>
+                    {lang === 'id' ? 'Hai, ' : 'Hey, '}{' '}
+                    <span className="bg-gradient-to-r from-[#F07B6B] via-[#F5A898] to-[#9B8EC4] bg-clip-text text-transparent">
+                      Judges 💜
+                    </span>
+                  </>
+                ) : userName ? (
                   <>
                     {lang === 'id' ? 'Hai, Mama' : 'Hey, Mama'}{' '}
                     <span className="bg-gradient-to-r from-[#F07B6B] via-[#F5A898] to-[#9B8EC4] bg-clip-text text-transparent">
@@ -593,6 +613,7 @@ export function App() {
           <CallScreen
             onEndCall={endCall}
             lang={lang}
+            selectedMood={selectedMood}
           />
         )}
 

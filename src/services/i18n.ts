@@ -172,7 +172,7 @@ export const translations: Record<Language, Translations> = {
       },
       {
         id: 'numb',
-        emoji: '🫥',
+        emoji: '😶',
         label: 'Numb',
         subtitle: 'Drained of all energy',
         note: "You are not failing. Your soul is just out of battery. Big warm hug from across the screen.",
@@ -349,7 +349,7 @@ export const translations: Record<Language, Translations> = {
       },
       {
         id: 'numb',
-        emoji: '🫥',
+        emoji: '😶',
         label: 'Hampa',
         subtitle: 'Burnout & kehilangan energi',
         note: 'Mama tidak gagal. Mama cuma sedang kehabisan baterai jiwa. Peluk hangat dari jauh untuk Mama.',

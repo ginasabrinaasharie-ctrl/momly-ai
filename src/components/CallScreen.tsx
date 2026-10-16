@@ -3,15 +3,17 @@ import { Mic, MicOff, PhoneOff, Volume2, VolumeX, Sparkles, MessageSquareHeart, 
 import { speechService } from '../services/speechService.ts';
 import { geminiCompanion } from '../services/geminiVoiceCompanion.ts';
 import { usageGuard } from '../services/usageGuard.ts';
-import { MomlyAvatar } from './MomlyAvatar.tsx';
+import { MomlyAvatar, MomlyPose } from './MomlyAvatar.tsx';
+import { MoodOption } from './MoodCheckIn.tsx';
 import { Language, translations } from '../services/i18n.ts';
 
 interface CallScreenProps {
   onEndCall: () => void;
   lang: Language;
+  selectedMood?: MoodOption | null;
 }
 
-export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang }) => {
+export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selectedMood }) => {
   const t = translations[lang].callScreen;
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
@@ -331,6 +333,45 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang }) => {
     }
   };
 
+  // Helper to dynamically select sympathetic or supportive avatar pose
+  const getAvatarPose = (): MomlyPose => {
+    const sadMoodIds = ['exhausted', 'anxious', 'crying', 'numb'];
+    const hasSadMood = selectedMood?.id && sadMoodIds.includes(selectedMood.id);
+
+    const fullConversationText = `${speechTextRef.current} ${latestUserText} ${latestModelText}`.toLowerCase();
+    const distressWords = [
+      'sedih', 'nangis', 'lelah', 'capek', 'sakit', 'pusing', 'demam', 'stres', 'stress', 'hampa',
+      'berat', 'bingung', 'takut', 'cemas', 'kecewa', 'drop', 'kewalahan', 'burnout',
+      'overwhelmed', 'sad', 'crying', 'cry', 'tired', 'exhausted', 'sick', 'pain', 'hurts',
+      'anxious', 'panic', 'grief', 'lonely', 'hopeless', 'heavy', 'drained', 'numb', 'down'
+    ];
+    const isVulnerable = !!hasSadMood || distressWords.some((word) => fullConversationText.includes(word));
+
+    if (callStatus === 'connecting') {
+      return isVulnerable ? 'welcoming' : 'bestie';
+    }
+
+    if (callStatus === 'thinking') {
+      return 'understanding';
+    }
+
+    if (callStatus === 'listening') {
+      return isVulnerable ? 'understanding' : 'listening';
+    }
+
+    // When Momly is speaking:
+    if (callStatus === 'speaking') {
+      // If user is sad/exhausted/sick, Momly displays a sympathetic compassionate face ('understanding')
+      // instead of cheerful laughing/clasping ('supportive')
+      if (isVulnerable) {
+        return 'understanding';
+      }
+      return 'supportive';
+    }
+
+    return 'bestie';
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-between bg-gradient-to-b from-[#1C1228] via-[#2D2040] to-[#1C1228] text-white p-5 sm:p-8 select-none max-w-md mx-auto sm:rounded-[36px] overflow-hidden shadow-2xl">
       {/* Top Header: Logo, Name & Duration */}
@@ -339,7 +380,7 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang }) => {
           <Sparkles className="w-3 h-3 text-[#F07B6B] animate-spin" />
           <span>
             {usageGuard.getCurrentUser()?.role === 'judge'
-              ? (lang === 'id' ? 'Mode Juri • Kuota Aman Aktif' : 'Judge Mode • Quota Guard Active')
+              ? (lang === 'id' ? 'Judges Mode • Kuota Aman Aktif' : 'Judges Mode • Quota Guard Active')
               : t.substatus}
           </span>
         </div>
@@ -391,15 +432,7 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang }) => {
           >
             <MomlyAvatar
               size="xl"
-              pose={
-                callStatus === 'speaking'
-                  ? 'supportive'
-                  : callStatus === 'thinking'
-                  ? 'understanding'
-                  : callStatus === 'connecting'
-                  ? 'winking'
-                  : 'listening'
-              }
+              pose={getAvatarPose()}
               isSpeaking={callStatus === 'speaking'}
               isListening={callStatus === 'listening'}
             />

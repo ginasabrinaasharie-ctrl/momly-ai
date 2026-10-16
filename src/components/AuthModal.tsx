@@ -190,9 +190,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   // Direct 1-Click Judge Demo Bypass (Instant access without password)
   const handleJudgeBypass = () => {
     setIsSubmitting(true);
-    const user = usageGuard.loginAsJudge(
-      isIndonesian ? 'Juri AI Builder Cup' : 'AI Builder Cup Judge'
-    );
+    const user = usageGuard.loginAsJudge('Judges');
     setTimeout(() => {
       onSuccess(user);
       setIsSubmitting(false);
@@ -456,12 +454,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         <div className="relative flex items-center justify-center my-3">
           <div className="border-t border-slate-200 w-full" />
           <span className="bg-white px-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">
-            {isIndonesian ? 'Akses Khusus Juri' : 'Judge Special Access'}
+            {isIndonesian ? 'Akses Khusus Judges' : 'Judges Special Access'}
           </span>
           <div className="border-t border-slate-200 w-full" />
         </div>
 
-        {/* SECTION 3: TOMBOL DEMO JURI AI BUILDER CUP (1-KLIK LANGSUNG MASUK TANPA PASSWORD) */}
+        {/* SECTION 3: TOMBOL DEMO JUDGES AI BUILDER CUP (1-KLIK LANGSUNG MASUK TANPA PASSWORD) */}
         <button
           onClick={handleJudgeBypass}
           disabled={isSubmitting}
@@ -470,8 +468,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <Sparkles className="w-4 h-4 text-amber-200" />
           <span>
             {isIndonesian
-              ? '✨ Demo Juri (Langsung Masuk)'
-              : '✨ Judge Demo (Instant Access)'}
+              ? '✨ Mode Judges (Langsung Masuk)'
+              : '✨ Judges Mode (Instant Access)'}
           </span>
           <ArrowRight className="w-4 h-4" />
         </button>
