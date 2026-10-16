@@ -38,6 +38,7 @@ export type DetectedCrisisRegion = 'ID' | 'IN' | 'US_CA' | 'UK' | 'AU' | 'GLOBAL
 
 export interface LocationSignals {
   userOverride?: string;          // User-selected country in profile / settings (e.g. 'ID', 'IN', 'US', etc.)
+  userCountryOverride?: string;   // Alias for userOverride
   networkCountryCode?: string;    // IP-based 2-letter country code (e.g. 'ID', 'IN', 'US', 'GB', 'AU')
   timeZone?: string;              // Timezone string (e.g. 'Asia/Jakarta', 'Asia/Kolkata')
   localeLanguages?: string[];     // navigator.languages (e.g. ['en-IN', 'hi-IN'])
@@ -113,7 +114,7 @@ if (typeof window !== 'undefined') {
  */
 export function resolveCrisisRegion(signals?: Partial<LocationSignals>): RegionResolutionResult {
   // Layer 1: Explicit User Setting
-  let userOverride = signals?.userOverride;
+  let userOverride = signals?.userOverride ?? signals?.userCountryOverride;
   if (!userOverride && typeof window !== 'undefined' && window.localStorage) {
     userOverride = window.localStorage.getItem('momly_country_override') || undefined;
   }

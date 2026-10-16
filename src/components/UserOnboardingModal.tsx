@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Sparkles, Heart, X } from 'lucide-react';
+import { Sparkles, Heart, X, ShieldAlert } from 'lucide-react';
 import { MomlyAvatar } from './MomlyAvatar.tsx';
 import { Language } from '../services/i18n.ts';
+import { resolveCrisisRegion } from '../services/safetyGuard.ts';
 
 interface UserOnboardingModalProps {
   currentName: string;
@@ -19,9 +20,28 @@ export const UserOnboardingModal: React.FC<UserOnboardingModalProps> = ({
   isInitialSetup = false,
 }) => {
   const [nameInput, setNameInput] = useState(currentName);
+  const [countryOverride, setCountryOverride] = useState<string>(() => {
+    return localStorage.getItem('momly_country_override') || 'AUTO';
+  });
+
+  const autoDetected = resolveCrisisRegion({ userCountryOverride: '' });
+  const detectedLabel =
+    {
+      ID: '🇮🇩 Indonesia',
+      IN: '🇮🇳 India',
+      US_CA: '🇺🇸 US & Canada',
+      UK: '🇬🇧 UK & Ireland',
+      AU: '🇦🇺 Australia & NZ',
+      GLOBAL: '🌐 Global',
+    }[autoDetected.region] || '🌐 Global';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (countryOverride === 'AUTO') {
+      localStorage.removeItem('momly_country_override');
+    } else {
+      localStorage.setItem('momly_country_override', countryOverride);
+    }
     const clean = nameInput.trim();
     if (clean) {
       onSaveName(clean);
@@ -68,17 +88,30 @@ export const UserOnboardingModal: React.FC<UserOnboardingModalProps> = ({
 
         {/* Title & Subtitle */}
         <h3 className="text-xl sm:text-2xl font-extrabold text-[#1C1228] mb-1.5 tracking-tight">
-          {isIndonesian ? 'Kenalan Dulu Yuk! 🌸' : "Let's Get to Know You! 🌸"}
+          {isInitialSetup
+            ? isIndonesian
+              ? 'Kenalan Dulu Yuk! 🌸'
+              : "Let's Get to Know You! 🌸"
+            : isIndonesian
+            ? 'Profil & Preferensi Mama 🌸'
+            : 'Mama Profile & Settings 🌸'}
         </h3>
         <p className="text-xs sm:text-sm text-slate-600 mb-5 leading-relaxed max-w-xs mx-auto">
-          {isIndonesian
-            ? 'Biar Momly bisa menyapa dan mendengarkan ceritamu layaknya sahabat karib, siapa nama panggilan Mama?'
-            : "So Momly can greet you warmly like your true lifelong bestie, what's your nickname?"}
+          {isInitialSetup
+            ? isIndonesian
+              ? 'Biar Momly bisa menyapa dan mendengarkan ceritamu layaknya sahabat karib, siapa nama panggilan Mama?'
+              : "So Momly can greet you warmly like your true lifelong bestie, what's your nickname?"
+            : isIndonesian
+            ? 'Atur nama panggilan dan wilayah layanan darurat agar Momly selalu siap mendampingi Mama dengan aman.'
+            : 'Set your preferred nickname and crisis emergency region so Momly can accompany you safely.'}
         </p>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="relative">
+          <div className="text-left space-y-1">
+            <label className="block text-[11px] font-bold text-slate-700">
+              {isIndonesian ? 'Nama Panggilan Mama' : "Mama's Nickname"}
+            </label>
             <input
               type="text"
               autoFocus
@@ -90,7 +123,44 @@ export const UserOnboardingModal: React.FC<UserOnboardingModalProps> = ({
             />
           </div>
 
-          <div className="flex flex-col gap-2 pt-1">
+          {/* Emergency Crisis Region Setting */}
+          <div className="text-left space-y-1.5 pt-1">
+            <label className="flex items-center justify-between text-[11px] font-bold text-slate-700">
+              <span className="flex items-center gap-1.5">
+                <ShieldAlert className="w-3.5 h-3.5 text-[#F07B6B]" />
+                {isIndonesian ? 'Wilayah Layanan Darurat' : 'Crisis Emergency Region'}
+              </span>
+              <span className="text-[10px] font-normal text-slate-500">
+                {countryOverride === 'AUTO' ? `(Auto: ${detectedLabel})` : '(Manual)'}
+              </span>
+            </label>
+
+            <select
+              value={countryOverride}
+              onChange={(e) => setCountryOverride(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl border-2 border-[#FDDDD8] focus:border-[#F07B6B] bg-[#FFF8F2]/60 text-xs font-semibold text-[#1C1228] outline-none transition-all cursor-pointer"
+            >
+              <option value="AUTO">
+                {isIndonesian
+                  ? `🌐 Otomatis (Saat ini: ${detectedLabel})`
+                  : `🌐 Automatic (Currently: ${detectedLabel})`}
+              </option>
+              <option value="ID">🇮🇩 Indonesia (112, SEJIWA 119 ext 8, Pulih)</option>
+              <option value="IN">🇮🇳 India (112 ERSS, Tele-MANAS 14416, KIRAN)</option>
+              <option value="US_CA">🇺🇸 United States & Canada (988, 911)</option>
+              <option value="UK">🇬🇧 United Kingdom (999, Samaritans 116 123)</option>
+              <option value="AU">🇦🇺 Australia & New Zealand (000, Lifeline 13 11 14)</option>
+              <option value="GLOBAL">🌐 Universal Global (GSM 112/911, findahelpline)</option>
+            </select>
+
+            <p className="text-[10px] text-slate-500 leading-tight">
+              {isIndonesian
+                ? 'Menentukan nomor hotline darurat & bantuan profesional jika terjadi situasi krisis.'
+                : 'Selects the localized emergency helplines & crisis dispatch during urgent distress.'}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2 pt-2">
             <button
               type="submit"
               disabled={!nameInput.trim()}
@@ -103,8 +173,8 @@ export const UserOnboardingModal: React.FC<UserOnboardingModalProps> = ({
                     ? 'Simpan & Mulai Curhat ✨'
                     : 'Save & Start Chatting ✨'
                   : isIndonesian
-                  ? 'Simpan Nama Panggilan ✨'
-                  : 'Save Nickname ✨'}
+                  ? 'Simpan Pengaturan ✨'
+                  : 'Save Settings ✨'}
               </span>
             </button>
 
