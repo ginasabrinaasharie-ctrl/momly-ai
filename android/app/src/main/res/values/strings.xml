@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Momly</string>
+    <string name="title_activity_main">Momly</string>
+    <string name="package_name">com.momly.ai</string>
+    <string name="custom_url_scheme">com.momly.ai</string>
+</resources>

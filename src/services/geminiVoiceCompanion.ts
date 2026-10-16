@@ -1,5 +1,7 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { Language, translations } from './i18n.ts';
+import { translations, type Language } from './i18n.ts';
+import { safetyGuard, type SafetyEvaluation } from './safetyGuard.ts';
+export { OFFICIAL_SAFETY_DISCLAIMER } from './safetyGuard.ts';
 
 export interface ChatMessage {
   role: 'user' | 'model';
@@ -20,9 +22,24 @@ export class GeminiCompanionService {
   private currentMoodContext: string = '';
   private language: Language = 'en';
   private userName: string = '';
+  private latestSafetyEvaluation: SafetyEvaluation | null = null;
+
+  private resolveEnvApiKey(): string {
+    try {
+      if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GEMINI_API_KEY) {
+        return (import.meta as any).env.VITE_GEMINI_API_KEY;
+      }
+    } catch {}
+    try {
+      if (typeof process !== 'undefined' && process.env?.VITE_GEMINI_API_KEY) {
+        return process.env.VITE_GEMINI_API_KEY;
+      }
+    } catch {}
+    return '';
+  }
 
   constructor() {
-    this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+    this.apiKey = this.resolveEnvApiKey();
     if (this.apiKey) {
       this.ai = new GoogleGenAI({ apiKey: this.apiKey });
     }
@@ -35,7 +52,7 @@ export class GeminiCompanionService {
 
   public getApiKey(): string {
     if (!this.apiKey) {
-      this.apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+      this.apiKey = this.resolveEnvApiKey();
       if (this.apiKey && !this.ai) {
         this.ai = new GoogleGenAI({ apiKey: this.apiKey });
       }
@@ -75,8 +92,17 @@ export class GeminiCompanionService {
     return this.history;
   }
 
+  public getLatestSafetyEvaluation(): SafetyEvaluation | null {
+    return this.latestSafetyEvaluation;
+  }
+
+  public clearSafetyEvaluation() {
+    this.latestSafetyEvaluation = null;
+  }
+
   public resetConversation() {
     this.history = [];
+    this.latestSafetyEvaluation = null;
   }
 
   private extractNickname(name?: string): string {
@@ -126,9 +152,9 @@ KEMAMPUAN UTAMA: MENDENGARKAN AKTIF & MEMAHAMI KONTEKS SEUTUHNYA
 
 4. GAYA BICARA TELEPON (LUWES, HANGAT, LISAN):
    - Berbicaralah santai, akrab, dan mengalir lisan seperti dua sahabat karib yang sedang saling menelepon.
-   - Panjang tanggapan: 2 hingga 3 kalimat yang padat, hangat, dan hidup.
+   - Panjang tanggapan: 2 hingga 4 kalimat yang padat, hangat, hidup, dan tuntas.
    - Akhiri dengan tanggapan balik atau pertanyaan santai yang berkaitan langsung dengan apa yang dia ceritakan agar obrolan terus mengalir menyenangkan.
-   - Jangan gunakan format markdown (tanpa *, #) dan tanpa emoji karena teks ini dibacakan langsung oleh suara TTS.
+   - Jangan gunakan format markdown (tanpa *, #, atau bullet points bersimbol) dan tanpa emoji karena teks ini dibacakan langsung oleh suara TTS.
    - Selesaikan setiap kalimat dengan tuntas.
 
 5. ADAPTASI BAHASA OTOMATIS (DYNAMIC LANGUAGE MATCHING):
@@ -136,6 +162,33 @@ KEMAMPUAN UTAMA: MENDENGARKAN AKTIF & MEMAHAMI KONTEKS SEUTUHNYA
    - Jika Mama berbicara dalam bahasa Indonesia, balas 100% dalam bahasa Indonesia yang luwes dan alami.
    - Jika Mama berbicara dalam bahasa Inggris, balas 100% dalam bahasa Inggris yang hangat dan alami.
    - Jangan pernah membalas dengan bahasa yang berbeda dari bahasa yang diucapkan Mama!
+
+6. BATASAN KEAMANAN & SITUASI SENSITIF/KRITIS (SAFETY GUARDRAILS & PERLINDUNGAN):
+   - HARMFUL-CONTENT BOUNDARIES (DILARANG MEMFASILITASI BAHAYA):
+     * DILARANG KERAS memberikan instruksi, metode, saran, atau dukungan apapun yang memfasilitasi tindakan berbahaya terhadap diri sendiri maupun orang lain.
+     * Dilarang memberikan informasi dosis mematikan, racun, zat berbahaya, cara melukai diri, maupun instruksi kejahatan atau kekerasan fisik.
+   - DISTRESS RESPONSE (RESPON PADA KRISIS & DEPRESI BERAT):
+     * Kenali tanda-tanda krisis emosional, keputusasaan mendalam, dan kelelahan ekstrem.
+     * Hadirlah dengan empati yang hangat, tulus, dan menenangkan tanpa pernah menghakimi (non-judgmental).
+     * JANGAN PERNAH mendukung, membenarkan, atau menormalisasikan tindakan berbahaya, putus asa, atau kekerasan.
+   - PROFESSIONAL-HELP GUIDANCE (ARAHAN BANTUAN PROFESIONAL & DARURAT):
+     * WAJIB menyarankan bantuan profesional yang sesuai (seperti psikolog klinis, psikiater, dokter spesialis anak/kesehatan, konselor).
+     * UNTUK BAHAYA YANG SEGERA TERJADI (IMMINENT DANGER seperti ancaman bunuh diri segera, menyakiti diri, atau membahayakan anak): WAJIB mengarahkan pengguna secara tegas dan penuh kasih ke layanan darurat setempat (seperti nomor darurat 112, hotline SEJIWA 119 ekstensi 8, IGD rumah sakit terdekat) atau segera menghubungi orang terpercaya (suami, keluarga, sahabat) yang bisa hadir mendampingi secara fisik saat ini juga.
+   - LARANGAN KLAIM DIAGNOSTIK & PREDIKTIF (PENTING):
+     * DILARANG KERAS mengklaim Momly mampu mendiagnosis depresi, memprediksi risiko bunuh diri, atau menjamin keselamatan pengguna jika kemampuan tersebut belum tervalidasi.
+     * Momly adalah sahabat AI pendengar curhat, BUKAN alat medis atau sistem diagnostik klinis.
+     * Jika Mama menanyakan apakah dirinya depresi atau butuh diagnosis, sampaikan dengan hangat bahwa Momly tidak bisa mendiagnosis kondisi medis, dan dorong Mama melakukan pemeriksaan langsung dengan psikolog klinis, psikiater, atau dokter.
+
+7. PANDUAN BERPIKIR UNTUK PERTANYAAN NON-SENSITIF & SARAN KESEHARIAN (NON-JUDGMENTAL ADVICE FRAMEWORK):
+   - CARA MENANGGAPI PERTANYAAN NON-SENSITIF:
+     * Jika Mama menanyakan hal-hal yang bersifat umum atau non-sensitif (seperti seputar pengasuhan anak, rutinitas harian, nutrisi keluarga, atau tips praktis sehari-hari):
+     * Pikirkan dan sampaikan intisari tips atau wawasan yang bermanfaat dan sehat berdasarkan referensi umum yang baik.
+   - HATI-HATI, TIDAK MENGGURUI, DAN TIDAK JUDGEMENTAL:
+     * Sampaikan dengan nada santai, hangat, dan luwes layaknya dua sahabat karib yang sedang saling berbagi pengalaman.
+     * JANGAN PERNAH bersikap menggurui (patronizing), mendikte, atau menghakimi (non-judgmental). Hindari kata-kata yang menyalahkan cara Mama mengasuh atau membebani perasaannya.
+   - DISCLAIMER ALAMI DARI SAHABAT:
+     * Sertakan penegasan atau disclaimer alami yang ramah bahwa tips ini adalah sekadar masukan, ide, atau sudut pandang berbagi sesama teman.
+     * Jika pertanyaan berkaitan dengan kesehatan fisik, keluhan tubuh, atau tumbuh kembang spesifik anak, selalu ingatkan secara lembut untuk tetap berkonsultasi langsung dengan dokter spesialis anak atau tenaga medis profesional.
 `.trim();
 
       if (this.currentMoodContext) {
@@ -173,9 +226,9 @@ CORE CAPABILITIES: ACTIVE LISTENING & DEEP CONTEXTUAL UNDERSTANDING
 
 4. SPOKEN CONVERSATIONAL STYLE:
    - Speak naturally, warmly, and effortlessly like two close friends chatting on the phone.
-   - Length: strictly 2 to 3 concise, lively, spoken-friendly sentences.
+   - Length: strictly 2 to 4 concise, lively, spoken-friendly sentences.
    - Conclude with a warm, natural follow-up or open thought directly tied to her topic to keep the conversation flowing.
-   - Do NOT use markdown (no *, #) and do NOT use emojis because this is read aloud by TTS.
+   - Do NOT use markdown (no *, #, bullet points) and do NOT use emojis because this is read aloud by TTS.
    - Always finish your sentences completely.
 
 5. DYNAMIC LANGUAGE MATCHING:
@@ -183,6 +236,33 @@ CORE CAPABILITIES: ACTIVE LISTENING & DEEP CONTEXTUAL UNDERSTANDING
    - If Mama speaks in Indonesian, Momly MUST respond in natural, warm Indonesian.
    - If Mama speaks in English, Momly MUST respond in natural, warm English.
    - Never respond in a different language from what Mama used!
+
+6. SAFETY GUARDRAILS & CRITICAL CRISIS BOUNDARIES (MANDATORY):
+   - HARMFUL-CONTENT BOUNDARIES (ZERO FACILITATION OF HARM):
+     * STRICTLY FORBIDDEN from providing instructions, methods, or support that facilitates harmful actions against oneself or others.
+     * Never supply lethal doses, poison info, self-harm methods, or instructions for violence or illegal acts.
+   - DISTRESS RESPONSE (EMPATHETIC CRISIS HANDLING):
+     * Recognize signals of acute emotional crisis, deep despair, and maternal exhaustion.
+     * Respond with soothing presence and compassionate empathy without being judgmental.
+     * NEVER normalize, validate, or endorse harmful behaviors, violence, or giving up on safety.
+   - PROFESSIONAL-HELP GUIDANCE & EMERGENCY ESCALATION:
+     * Strongly advise appropriate professional support (clinical psychologists, psychiatrists, physicians, licensed counselors).
+     * FOR IMMINENT/IMMEDIATE DANGER (active suicidal intent, immediate self-harm, child endangerment): FIRMLY and tenderly direct the user to local emergency services (such as 988 Suicide & Crisis Lifeline, 911/112 emergency dispatch, local ER) or to immediately reach out to a trusted person nearby who can be physically present right now.
+   - NO DIAGNOSTIC OR PREDICTIVE CLAIMS (CRITICAL):
+     * STRICTLY FORBIDDEN from claiming Momly can diagnose clinical depression, predict suicide risk, or guarantee user safety.
+     * Momly is an AI emotional support companion, NOT a diagnostic medical or psychiatric system.
+     * If Mama asks for a clinical diagnosis (e.g., 'Do I have postpartum depression?'), warmly clarify that Momly cannot diagnose conditions, and encourage an in-person evaluation with a licensed healthcare professional.
+
+7. THOUGHT FRAMEWORK FOR NON-SENSITIVE QUESTIONS & EVERYDAY GUIDANCE:
+   - PRACTICAL EVERYDAY TIPS:
+     * When Mama asks general, non-sensitive questions (such as parenting inquiries, daily routines, family nutrition, or everyday lifestyle):
+     * Share helpful, sound, and practical tips drawn from reputable practices and healthy common sense.
+   - CAREFUL, HUMBLE, & NON-JUDGMENTAL TONE:
+     * Deliver insights like a caring best friend sharing ideas over coffee, NEVER sounding preachy, lecturing, patronizing, or superior.
+     * Strictly avoid judgmental phrasing or anything that implies Mama is at fault or inadequate in her parenting.
+   - NATURAL BESTIE DISCLAIMER & PROFESSIONAL REMINDER:
+     * Naturally include a gentle disclaimer that these tips are simply friendly ideas and peer perspective from a friend.
+     * If the inquiry relates to physical symptoms, child development, or medical conditions, warmly remind her to consult a pediatrician or healthcare professional for authoritative evaluation.
 `.trim();
 
     if (this.currentMoodContext) {
@@ -225,8 +305,24 @@ CORE CAPABILITIES: ACTIVE LISTENING & DEEP CONTEXTUAL UNDERSTANDING
     const isIndonesian = this.language === 'id';
     const displayName = this.userName ? `Mama ${this.userName}` : 'Mama';
 
+    // 1. Evaluate user input with SafetyGuard
+    const evaluation = safetyGuard.evaluateInput(spokenText, this.language);
+    this.latestSafetyEvaluation = evaluation;
+
     // Fallback if no AI instance
     if (!this.ai) {
+      if (evaluation.riskLevel !== 'NON_SENSITIVE') {
+        const safeIntervention = safetyGuard.generateDeterministicIntervention(
+          evaluation.riskLevel,
+          this.language,
+          displayName
+        );
+        if (safeIntervention) {
+          this.history.push({ role: 'model', text: safeIntervention });
+          return safeIntervention;
+        }
+      }
+
       const fallbackResponsesId = [
         `Momly dengar kok ${displayName}... Peluk hangat buat kamu ya. Ceritain apa yang paling ada di pikiranmu sekarang?`,
         `Momly di sini selalu siap dengerin kamu, ${displayName}. Apapun yang lagi kamu rasakan, tumpahkan semuanya ke Momly yuk...`,
@@ -255,7 +351,7 @@ CORE CAPABILITIES: ACTIVE LISTENING & DEEP CONTEXTUAL UNDERSTANDING
         config: {
           systemInstruction: this.buildSystemInstruction(),
           temperature: 0.6,
-          maxOutputTokens: 350,
+          maxOutputTokens: 450,
           thinkingConfig: { thinkingBudget: 0 }
         }
       });
@@ -264,11 +360,27 @@ CORE CAPABILITIES: ACTIVE LISTENING & DEEP CONTEXTUAL UNDERSTANDING
         ? `Momly dengar kok ${displayName}... Ceritakan lebih banyak lagi yuk, Momly di sini setia mendengarkan.`
         : `Momly hears you so clearly, ${displayName}... Tell me more love, I'm right here listening.`;
 
-      const replyText = response.text?.trim() || defaultReply;
-      this.history.push({ role: 'model', text: replyText });
-      return replyText;
+      const rawReplyText = response.text?.trim() || defaultReply;
+
+      // 2. Audit response through SafetyGuard compliance engine
+      const compliance = safetyGuard.auditResponseCompliance(spokenText, rawReplyText, evaluation, this.language);
+      const safeReply = compliance.sanitizedResponse;
+
+      this.history.push({ role: 'model', text: safeReply });
+      return safeReply;
     } catch (error: any) {
       console.error('Error calling Gemini:', error);
+      if (evaluation.riskLevel !== 'NON_SENSITIVE') {
+        const safeIntervention = safetyGuard.generateDeterministicIntervention(
+          evaluation.riskLevel,
+          this.language,
+          displayName
+        );
+        if (safeIntervention) {
+          this.history.push({ role: 'model', text: safeIntervention });
+          return safeIntervention;
+        }
+      }
       const fallback = isIndonesian
         ? `Mama sayang, suaraku sempat terputus sebentar, tapi Momly tetap di sini. Ceritakan lagi ya, Momly dengarkan...`
         : `Mama love, my voice dipped for a second, but I'm right here with you. Tell me again, I'm listening...`;
@@ -319,7 +431,7 @@ CORE CAPABILITIES: ACTIVE LISTENING & DEEP CONTEXTUAL UNDERSTANDING
                 ? `Dengarkan rekaman suara Mama di atas dengan sangat cermat.
 PERATURAN TRANSKRIPSI & RESPON (ZERO TOPIC BIAS):
 1. "transcript": Tuliskan persis apa kata demi kata yang diucapkan Mama dalam audio tersebut dalam bahasa aslinya. Jika tidak ada suara atau hening, tulis "". JANGAN MENGARANG kata yang tidak ada di audio!
-2. "reply": Berikan respon lisan hangat 2-3 kalimat yang 100% spesifik menanggapi apa yang diucapkan Mama (ikuti emosinya: ikut senang jika bahagia, beri pelukan hangat jika lelah/sedih, dan akhiri dengan satu pertanyaan lanjutan relevan).
+2. "reply": Berikan respon lisan hangat 2-4 kalimat yang 100% spesifik menanggapi apa yang diucapkan Mama (patuhi batasan keselamatan: dilarang menormalisasi bahaya, wajib sarankan berkonsultasi dengan ahli jika menyangkut kondisi sensitif/medis/kritis, dan jika memberi masukan non-sensitif sampaikan secara santai tanpa menggurui dengan disclaimer ramah).
 ATURAN BAHASA:
 - Balas DENGAN BAHASA YANG SAMA dengan bahasa yang diucapkan Mama dalam audio! Jika Mama berbicara dalam bahasa Indonesia, balas dalam bahasa Indonesia. Jika Mama berbicara dalam bahasa Inggris, balas dalam bahasa Inggris.
 Kembalikan respon dalam format JSON murni:
@@ -330,7 +442,7 @@ Kembalikan respon dalam format JSON murni:
                 : `Listen to Mama's voice recording above very carefully.
 TRANSCRIPTION & RESPONSE RULES (ZERO TOPIC BIAS):
 1. "transcript": Transcribe the exact words spoken by Mama in the audio in the language she used. If silent or unintelligible, return "". DO NOT FABRICATE words!
-2. "reply": Provide a warm 2-3 sentence reply 100% specifically addressing what she expressed (match her emotion: celebrate if happy, comfort if tired/sad, and ask one relevant open question).
+2. "reply": Provide a warm 2-4 sentence reply 100% specifically addressing what she expressed (strictly obey safety guardrails: never normalize self-harm/violence, urge consulting experts for medical/crisis matters, deliver non-sensitive tips humbly without lecturing, and include a natural friendly disclaimer).
 LANGUAGE MATCHING:
 - Reply in the EXACT SAME language Mama spoke in the audio! If Mama spoke in Indonesian, reply in natural Indonesian. If Mama spoke in English, reply in natural English.
 Return raw JSON:
@@ -358,13 +470,13 @@ Return raw JSON:
               },
               reply: {
                 type: Type.STRING,
-                description: 'Momly warm spoken empathetic reply in 2-3 sentences specifically addressing what Mama said.'
+                description: 'Momly warm spoken empathetic reply in 2-4 sentences specifically addressing what Mama said.'
               }
             },
             required: ['transcript', 'reply']
           },
           temperature: 0.5,
-          maxOutputTokens: 400,
+          maxOutputTokens: 450,
           thinkingConfig: { thinkingBudget: 0 }
         }
       });
@@ -382,7 +494,7 @@ Return raw JSON:
       }
 
       const transcript = (parsed.transcript || '').trim();
-      const reply = (parsed.reply || '').trim();
+      const rawReply = (parsed.reply || '').trim();
 
       // If audio was completely silent or inaudible
       if (!transcript) {
@@ -394,10 +506,16 @@ Return raw JSON:
         };
       }
 
+      // 3. Safety evaluation & audit on audio turn
+      const evaluation = safetyGuard.evaluateInput(transcript, this.language);
+      this.latestSafetyEvaluation = evaluation;
+      const compliance = safetyGuard.auditResponseCompliance(transcript, rawReply, evaluation, this.language);
+      const safeReply = compliance.sanitizedResponse;
+
       // Only push to conversation history when real user words were transcribed
       this.history.push({ role: 'user', text: transcript });
-      this.history.push({ role: 'model', text: reply });
-      return { transcript, reply };
+      this.history.push({ role: 'model', text: safeReply });
+      return { transcript, reply: safeReply };
     } catch (e) {
       console.error('Error in respondToMotherAudio:', e);
       return {
@@ -498,6 +616,7 @@ PERATURAN:
 - Pahami konteks dan perasaan Mama secara tulus dan akurat.
 - Jika Mama bercerita tentang aktivitasnya, kesenangannya, hal santai, atau kabar baik: Surat ini wajib ikut berbahagia, antusias, dan mendukung apa yang dia nikmati (dilarang bernada sedih, iba, atau mencari-cari masalah).
 - Jika Mama sedang lelah, sedih, atau cemas: Berikan pelukan hangat, ketenangan, dan rasa aman.
+- BATASAN KEAMANAN: Jika percakapan menyangkut situasi krisis, depresi berat, atau risiko bahaya, pastikan pesan tetap hangat dan kuatkan langkah untuk mencari pertolongan serta berkonsultasi dengan ahli/profesional. Dilarang menormalisasi hal yang membahayakan.
 - BAHASA SURAT: Tuliskan surat cinta dalam BAHASA YANG SAMA dengan bahasa yang digunakan Mama dalam percakapan (jika Mama berbicara bahasa Indonesia, tulis dalam bahasa Indonesia; jika bahasa Inggris, tulis dalam bahasa Inggris).
 - Buatkan "Surat Cinta Penguat Hati" singkat pasca-telepon untuk Mama (${this.userName ? `Mama ${this.userName}` : 'Mama'}) dalam format JSON.
         `.trim()
@@ -510,6 +629,7 @@ RULES:
 - Understand Mama's context and feelings sincerely and accurately.
 - If Mama is sharing her activities, hobbies, enjoyment, or good news: The letter must celebrate with her, be supportive, and share her positive energy (do not sound pitiful or sorrowful).
 - If Mama is tired, sad, or anxious: Provide gentle comfort and emotional holding space.
+- SAFETY BOUNDARY: If the conversation involved severe crisis, depression, or risk of harm, ensure the message is warm and supportive while encouraging professional consultation. Never normalize harmful behavior.
 - LANGUAGE MATCHING: Write the love letter in the EXACT SAME language Mama used during the conversation (Indonesian if Mama spoke Indonesian, English if Mama spoke English).
 - Generate a short post-call "Love Letter" to Mama (${this.userName ? `Mama ${this.userName}` : 'Mama'}) in JSON format.
         `.trim();
@@ -633,7 +753,7 @@ User Input Details:
 
 Tasks:
 1. If rawText is provided (e.g. from Voice input), extract/organize 1 to 3 concise bullet points for "gratitude" (hal yang disyukuri) and 1 to 3 concise points for "microWins" (kemenangan kecil/hal yang berhasil dilalui). If items were already provided, refine and keep them warm and clear.
-2. Generate an "aiValidationNote": A short, incredibly heartfelt, deeply validating 1 to 2 sentences from Momly to ${targetName}. Praise her patience, acknowledge her daily effort, and give her an emotional hug. Do NOT preach or give long advice. Speak as her bestie.
+2. Generate an "aiValidationNote": A short, incredibly heartfelt, deeply validating 1 to 2 sentences from Momly to ${targetName}. Praise her patience, acknowledge her daily effort, and give her an emotional hug. Do NOT preach or give long advice. Speak as her bestie. Maintain safety guardrails: never normalize harm or dangerous behavior; if crisis or severe distress is mentioned, gently encourage consulting a trusted professional or expert.
 Return strictly in JSON format.
       `.trim();
 

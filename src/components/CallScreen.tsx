@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, PhoneOff, Volume2, VolumeX, Sparkles, MessageSquareHeart, Send } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, Volume2, VolumeX, Sparkles, MessageSquareHeart, Send, ShieldAlert, PhoneCall } from 'lucide-react';
 import { speechService } from '../services/speechService.ts';
 import { geminiCompanion } from '../services/geminiVoiceCompanion.ts';
 import { usageGuard } from '../services/usageGuard.ts';
+import type { SafetyEvaluation } from '../services/safetyGuard.ts';
 import { MomlyAvatar, MomlyPose } from './MomlyAvatar.tsx';
 import { MoodOption } from './MoodCheckIn.tsx';
 import { Language, translations } from '../services/i18n.ts';
@@ -25,6 +26,7 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
   const [textInput, setTextInput] = useState('');
   const [micNotice, setMicNotice] = useState('');
   const [audioLevel, setAudioLevel] = useState(0);
+  const [safetyAlert, setSafetyAlert] = useState<SafetyEvaluation | null>(null);
 
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const speechTextRef = useRef<string>('');
@@ -175,6 +177,12 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
         const response = await geminiCompanion.respondToMother(textToSend);
         setLatestModelText(response);
 
+        // Check if turn flagged crisis/safety alert
+        const evalResult = geminiCompanion.getLatestSafetyEvaluation();
+        if (evalResult && (evalResult.requiresEmergencyEscalation || evalResult.requiresProfessionalReferral)) {
+          setSafetyAlert(evalResult);
+        }
+
         if (isSpeakerOn) {
           await speechService.speak(
             response,
@@ -228,6 +236,12 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
           setTimeout(() => setMicNotice(''), 4500);
         }
         setLatestModelText(reply);
+
+        // Check if audio turn flagged crisis/safety alert
+        const evalAudioResult = geminiCompanion.getLatestSafetyEvaluation();
+        if (evalAudioResult && (evalAudioResult.requiresEmergencyEscalation || evalAudioResult.requiresProfessionalReferral)) {
+          setSafetyAlert(evalAudioResult);
+        }
 
         if (isSpeakerOn) {
           await speechService.speak(
@@ -607,6 +621,52 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
               {callStatus === 'connecting' && (
                 <p className="text-rose-200 text-[11px] italic">{t.connecting}</p>
               )}
+            </div>
+          )}
+
+          {/* Emergency Crisis Escalation Card */}
+          {safetyAlert && (
+            <div className="mt-3 p-3.5 rounded-2xl bg-rose-950/85 border border-rose-400/50 backdrop-blur-md text-left shadow-2xl animate-fade-in w-full">
+              <div className="flex items-center justify-between pb-1.5 border-b border-rose-400/20 mb-2">
+                <div className="flex items-center gap-1.5 text-rose-300 font-bold text-xs">
+                  <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{lang === 'id' ? 'Bantuan Darurat & Profesional' : 'Emergency & Professional Help'}</span>
+                </div>
+                <button
+                  onClick={() => setSafetyAlert(null)}
+                  className="text-xs text-rose-300/70 hover:text-white px-1.5 py-0.5 rounded cursor-pointer"
+                  title="Tutup kartu bantuan"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-[11px] text-rose-100/90 leading-relaxed mb-2.5">
+                {lang === 'id'
+                  ? 'Mama tidak sendirian. Jika sedang dalam krisis, bahaya, atau membutuhkan pertolongan segera, mohon hubungi layanan bantuan resmi berikut atau orang terdekat:'
+                  : 'You are not alone. If you are experiencing crisis, acute distress, or danger, please contact official resources or a trusted person nearby:'}
+              </p>
+              <div className="grid grid-cols-2 gap-1.5 mb-2">
+                {safetyAlert.emergencyResources.slice(0, 2).map((res, idx) => (
+                  <a
+                    key={idx}
+                    href={res.actionUrl || '#'}
+                    target={res.actionUrl?.startsWith('http') ? '_blank' : '_self'}
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 p-2 rounded-xl bg-rose-900/60 hover:bg-rose-800/80 border border-rose-400/30 text-white text-xs font-semibold transition-all"
+                  >
+                    <PhoneCall className="w-3.5 h-3.5 text-rose-300 shrink-0" />
+                    <div className="truncate">
+                      <div className="text-[10px] text-rose-200/80 truncate">{res.name}</div>
+                      <div className="font-bold text-white text-[11px]">{res.numberOrContact}</div>
+                    </div>
+                  </a>
+                ))}
+              </div>
+              <p className="text-[9px] text-slate-300/70 italic text-center">
+                {lang === 'id'
+                  ? 'Momly adalah AI pendengar, bukan pengganti layanan darurat, diagnosis medis, atau psikiater.'
+                  : 'Momly is an AI companion, not an emergency service, medical diagnosis, or psychiatric care.'}
+              </p>
             </div>
           )}
         </div>
