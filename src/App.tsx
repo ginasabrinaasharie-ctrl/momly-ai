@@ -7,6 +7,7 @@ import {
   BookHeart,
   Mail,
   LogOut,
+  Edit3,
 } from 'lucide-react';
 import { CallScreen } from './components/CallScreen.tsx';
 import { EmpathySummaryModal } from './components/EmpathySummaryModal.tsx';
@@ -22,12 +23,20 @@ import { LanguageSelectModal } from './components/LanguageSelectModal.tsx';
 import { UserOnboardingModal } from './components/UserOnboardingModal.tsx';
 import { MomlyAvatar } from './components/MomlyAvatar.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
+import { LandingPage } from './components/LandingPage.tsx';
 import { geminiCompanion } from './services/geminiVoiceCompanion.ts';
 import { speechService } from './services/speechService.ts';
 import { usageGuard, AuthUser } from './services/usageGuard.ts';
 import { logoutFirebase } from './services/firebase.ts';
 import { Language, translations } from './services/i18n.ts';
 import { JournalEntry } from './types/journal.ts';
+
+const extractNickname = (name?: string): string => {
+  if (!name) return 'Mama';
+  const clean = name.trim().replace(/^(mama|ibu|bunda)\s+/i, '').trim();
+  const firstWord = clean.split(/\s+/)[0] || 'Mama';
+  return firstWord;
+};
 
 export function App() {
   // Language state (default to English as requested)
@@ -47,9 +56,7 @@ export function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
     return usageGuard.getCurrentUser();
   });
-  const [showAuthModal, setShowAuthModal] = useState<boolean>(() => {
-    return !usageGuard.isAuthenticated();
-  });
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
   const [showNameModal, setShowNameModal] = useState(false);
   const [isInitialOnboarding, setIsInitialOnboarding] = useState(false);
@@ -68,12 +75,69 @@ export function App() {
   const [showBreathingModal, setShowBreathingModal] = useState(false);
   const [showMemoryModal, setShowMemoryModal] = useState(false);
   const [memories, setMemories] = useState<StoredMemory[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+
+  // Load user data whenever currentUser changes (prevents cross-user data leakage)
+  useEffect(() => {
+    if (!currentUser) {
+      setMemories([]);
+      setJournalEntries([]);
+      setUserName('');
+      return;
+    }
+
+    const userId = currentUser.id;
+
+    // 1. Nickname
+    try {
+      const savedNick = localStorage.getItem(`momly_nickname_${userId}`);
+      const nick = savedNick || extractNickname(currentUser.name);
+      setUserName(nick);
+      geminiCompanion.setUserName(nick);
+    } catch (e) {
+      console.warn('Failed to load nickname:', e);
+    }
+
+    // 2. Memories (User-scoped)
+    try {
+      let saved = localStorage.getItem(`momly_memories_${userId}`);
+      if (!saved && currentUser.role === 'judge') {
+        saved = localStorage.getItem('momly_memories');
+      }
+      if (saved) {
+        setMemories(JSON.parse(saved));
+      } else {
+        setMemories([]);
+      }
+    } catch (e) {
+      console.warn('Failed to load memories:', e);
+      setMemories([]);
+    }
+
+    // 3. Heart Journal (User-scoped)
+    try {
+      let savedJournal = localStorage.getItem(`momly_heart_journal_${userId}`);
+      if (!savedJournal && currentUser.role === 'judge') {
+        savedJournal = localStorage.getItem('momly_heart_journal');
+      }
+      if (savedJournal) {
+        setJournalEntries(JSON.parse(savedJournal));
+      } else {
+        setJournalEntries([]);
+      }
+    } catch (e) {
+      console.warn('Failed to load journal entries:', e);
+      setJournalEntries([]);
+    }
+  }, [currentUser?.id]);
 
   const handleAuthSuccess = (user: AuthUser) => {
     setCurrentUser(user);
-    setUserName(user.name);
+    const savedNick = localStorage.getItem(`momly_nickname_${user.id}`);
+    const nick = savedNick || extractNickname(user.name);
+    setUserName(nick);
+    geminiCompanion.setUserName(nick);
     setShowAuthModal(false);
-    geminiCompanion.setUserName(user.name);
   };
 
   const handleLogout = () => {
@@ -81,48 +145,30 @@ export function App() {
     logoutFirebase();
     setCurrentUser(null);
     setUserName('');
+    setMemories([]);
+    setJournalEntries([]);
+    setSelectedMood(null);
     localStorage.removeItem('momly_user_name');
-    setShowAuthModal(true);
+    setShowAuthModal(false);
   };
 
   // Sync language & userName with services
   useEffect(() => {
     geminiCompanion.setLanguage(lang);
-    geminiCompanion.setUserName(userName);
+    if (userName) geminiCompanion.setUserName(userName);
     speechService.setLanguage(lang);
     localStorage.setItem('momly_lang', lang);
   }, [lang, userName]);
 
-  // Load memories from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('momly_memories');
-      if (saved) {
-        setMemories(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.warn('Failed to load memories:', e);
-    }
-  }, []);
-
-  // Heart Journal state and persistence
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
-    try {
-      const saved = localStorage.getItem('momly_heart_journal');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      console.warn('Failed to load journal entries:', e);
-      return [];
-    }
-  });
-
   const handleAddJournalEntry = (entry: JournalEntry) => {
     setJournalEntries((prev) => {
       const updated = [entry, ...prev];
-      try {
-        localStorage.setItem('momly_heart_journal', JSON.stringify(updated));
-      } catch (e) {
-        console.warn('Failed to save journal entry to localStorage:', e);
+      if (currentUser?.id) {
+        try {
+          localStorage.setItem(`momly_heart_journal_${currentUser.id}`, JSON.stringify(updated));
+        } catch (e) {
+          console.warn('Failed to save journal entry to localStorage:', e);
+        }
       }
       return updated;
     });
@@ -131,10 +177,12 @@ export function App() {
   const handleDeleteJournalEntry = (id: string) => {
     setJournalEntries((prev) => {
       const updated = prev.filter((item) => item.id !== id);
-      try {
-        localStorage.setItem('momly_heart_journal', JSON.stringify(updated));
-      } catch (e) {
-        console.warn('Failed to update journal entries in localStorage:', e);
+      if (currentUser?.id) {
+        try {
+          localStorage.setItem(`momly_heart_journal_${currentUser.id}`, JSON.stringify(updated));
+        } catch (e) {
+          console.warn('Failed to update journal entries in localStorage:', e);
+        }
       }
       return updated;
     });
@@ -149,7 +197,9 @@ export function App() {
       )
     ) {
       setJournalEntries([]);
-      localStorage.removeItem('momly_heart_journal');
+      if (currentUser?.id) {
+        localStorage.removeItem(`momly_heart_journal_${currentUser.id}`);
+      }
     }
   };
 
@@ -159,11 +209,14 @@ export function App() {
   };
 
   const handleSaveName = (name: string) => {
-    const clean = name.trim();
-    setUserName(clean);
-    localStorage.setItem('momly_user_name', clean);
+    const nick = extractNickname(name);
+    setUserName(nick);
+    if (currentUser?.id) {
+      localStorage.setItem(`momly_nickname_${currentUser.id}`, nick);
+    }
+    localStorage.setItem('momly_user_name', nick);
     localStorage.setItem('momly_onboarding_shown', 'true');
-    geminiCompanion.setUserName(clean);
+    geminiCompanion.setUserName(nick);
     setShowNameModal(false);
     setIsInitialOnboarding(false);
   };
@@ -209,10 +262,12 @@ export function App() {
 
       const updatedMemories = [newMemory, ...memories].slice(0, 50);
       setMemories(updatedMemories);
-      try {
-        localStorage.setItem('momly_memories', JSON.stringify(updatedMemories));
-      } catch (storageErr) {
-        console.warn('Storage quota exceeded, unable to persist new memory:', storageErr);
+      if (currentUser?.id) {
+        try {
+          localStorage.setItem(`momly_memories_${currentUser.id}`, JSON.stringify(updatedMemories));
+        } catch (storageErr) {
+          console.warn('Storage quota exceeded, unable to persist new memory:', storageErr);
+        }
       }
     } catch (e) {
       console.error(e);
@@ -223,10 +278,39 @@ export function App() {
 
   const handleClearMemories = () => {
     setMemories([]);
-    localStorage.removeItem('momly_memories');
+    if (currentUser?.id) {
+      localStorage.removeItem(`momly_memories_${currentUser.id}`);
+    }
   };
 
   const t = translations[lang];
+
+  // Landing Page Gate: if not authenticated, show welcoming Landing Page and showcase
+  if (!currentUser) {
+    return (
+      <>
+        <LandingPage
+          lang={lang}
+          onSelectLang={handleSelectLang}
+          onOpenAuth={() => setShowAuthModal(true)}
+          onDemoJudge={() => {
+            const judgeUser = usageGuard.loginAsJudge();
+            handleAuthSuccess(judgeUser);
+          }}
+        />
+
+        <AuthModal
+          isOpen={showAuthModal}
+          currentUser={null}
+          onSuccess={handleAuthSuccess}
+          onLogout={handleLogout}
+          onClose={() => setShowAuthModal(false)}
+          lang={lang}
+          onSelectLang={handleSelectLang}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F7F4FA] sm:py-6 flex items-center justify-center font-sans antialiased text-[#1C1228]">
@@ -245,10 +329,10 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* User Profile / Judge Pill */}
+            {/* User Profile / Nickname Pill */}
             <button
-              onClick={() => setShowAuthModal(true)}
-              className={`inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-full border text-[11px] font-semibold transition-all cursor-pointer shadow-2xs max-w-[110px] sm:max-w-none ${
+              onClick={() => setShowNameModal(true)}
+              className={`inline-flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-full border text-[11px] font-semibold transition-all cursor-pointer shadow-2xs max-w-[130px] sm:max-w-none ${
                 currentUser?.role === 'judge'
                   ? 'border-amber-400 bg-amber-50 text-amber-900 hover:bg-amber-100 ring-2 ring-amber-300/40'
                   : 'border-[#FDDDD8] bg-[#FFF8F2] hover:bg-[#FDDDD8]/50 text-[#1C1228]'
@@ -256,7 +340,7 @@ export function App() {
               title={
                 currentUser?.role === 'judge'
                   ? (lang === 'id' ? 'Akses Juri AI Builder Cup' : 'AI Builder Cup Judge Pass')
-                  : (lang === 'id' ? 'Profil Akun' : 'Account Profile')
+                  : (lang === 'id' ? 'Ketuk untuk ganti nama panggilan Mama' : 'Tap to change your nickname')
               }
             >
               {currentUser?.photoURL ? (
@@ -271,8 +355,9 @@ export function App() {
               <span className="font-bold text-[10px] sm:text-[11px] truncate">
                 {currentUser?.role === 'judge'
                   ? (lang === 'id' ? 'Mode Juri' : 'Judge Mode')
-                  : (userName ? userName : (lang === 'id' ? 'Masuk' : 'Sign In'))}
+                  : (userName ? `Mama ${userName}` : 'Mama')}
               </span>
+              <Edit3 className="w-2.5 h-2.5 text-slate-400 shrink-0" />
             </button>
 
             {/* Direct Log Out Button */}

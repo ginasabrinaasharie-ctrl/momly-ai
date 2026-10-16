@@ -35,12 +35,17 @@ export const JournalModal: React.FC<JournalModalProps> = ({
 
   // Voice state
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [voiceNotice, setVoiceNotice] = useState('');
   const [voiceTranscript, setVoiceTranscript] = useState('');
 
   // Loading & Result state
   const [isProcessing, setIsProcessing] = useState(false);
   const [savedEntryPreview, setSavedEntryPreview] = useState<JournalEntry | null>(null);
 
+  const isSpeechSupported =
+    typeof window !== 'undefined' &&
+    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
   // Reset form when modal opens
   useEffect(() => {
@@ -51,13 +56,17 @@ export const JournalModal: React.FC<JournalModalProps> = ({
       setCustomGratitude('');
       setCustomWins('');
       setVoiceTranscript('');
+      setVoiceNotice('');
       setIsRecording(false);
+      setIsTranscribing(false);
       setIsProcessing(false);
       setSavedEntryPreview(null);
     } else {
       if (isRecording) {
         speechService.stopListening();
+        speechService.stopAudioRecording();
         setIsRecording(false);
+        setIsTranscribing(false);
       }
     }
   }, [isOpen]);
@@ -76,26 +85,71 @@ export const JournalModal: React.FC<JournalModalProps> = ({
     );
   };
 
-  const startVoiceRecording = () => {
+  const startVoiceRecording = async () => {
     setVoiceTranscript('');
+    setVoiceNotice('');
     setIsRecording(true);
-    speechService.startListening({
-      onResult: (text) => {
-        setVoiceTranscript(text);
-      },
-      onError: (err) => {
-        console.warn('Voice recording error:', err);
-        setIsRecording(false);
-      },
-      onEnd: () => {
-        setIsRecording(false);
-      },
-    });
+
+    // Always start physical MediaRecorder (works across all browsers including Firefox & Safari)
+    await speechService.startAudioRecording();
+
+    if (isSpeechSupported) {
+      speechService.startListening({
+        onResult: (text) => {
+          setVoiceTranscript(text);
+        },
+        onError: (err) => {
+          console.warn('Voice recording SpeechRecognition notice:', err);
+        },
+        onEnd: () => {
+          // Handled on manual stop or silence
+        },
+      });
+    } else {
+      setVoiceNotice(
+        lang === 'id'
+          ? '🎙️ Merekam suara Mama (Firefox)... Bicara santai ya, lalu klik tombol lagi saat selesai.'
+          : '🎙️ Recording voice (Firefox)... Speak freely, then tap button when finished.'
+      );
+    }
   };
 
-  const stopVoiceRecording = () => {
+  const stopVoiceRecording = async () => {
     speechService.stopListening();
     setIsRecording(false);
+
+    // Capture recorded audio bytes
+    const audioData = await speechService.stopAudioRecording();
+
+    // If Web Speech API didn't produce transcript (e.g. Firefox or mobile audio)
+    if (!voiceTranscript.trim() && audioData && audioData.base64 && audioData.base64.length > 200) {
+      setIsTranscribing(true);
+      setVoiceNotice(
+        lang === 'id'
+          ? '✨ Sedang menyalin suara Mama ke teks...'
+          : '✨ Transcribing your voice...'
+      );
+      try {
+        const transcript = await geminiCompanion.transcribeAudio(
+          audioData.base64,
+          audioData.mimeType
+        );
+        if (transcript) {
+          setVoiceTranscript(transcript);
+          setVoiceNotice('');
+        } else {
+          setVoiceNotice(
+            lang === 'id'
+              ? 'Suara tidak terdengar jelas. Mama bisa coba bicara lebih dekat atau ketik manual.'
+              : 'Voice was unclear. Please speak closer or type manually.'
+          );
+        }
+      } catch (err) {
+        console.warn('Audio transcription error:', err);
+      } finally {
+        setIsTranscribing(false);
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -387,25 +441,44 @@ export const JournalModal: React.FC<JournalModalProps> = ({
                   <div className="flex flex-col items-center justify-center space-y-3">
                     <button
                       type="button"
+                      disabled={isTranscribing}
                       onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
                       className={`w-16 h-16 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-lg ${
-                        isRecording
+                        isTranscribing
+                          ? 'bg-[#6B5FA0]/50 text-white cursor-wait'
+                          : isRecording
                           ? 'bg-rose-500 text-white animate-pulse shadow-rose-500/40 ring-4 ring-rose-200'
                           : 'bg-gradient-to-r from-[#6B5FA0] to-[#8B7FA0] text-white hover:opacity-95 shadow-[#6B5FA0]/30'
                       }`}
                     >
-                      {isRecording ? <MicOff className="w-7 h-7" /> : <Mic className="w-7 h-7" />}
+                      {isTranscribing ? (
+                        <Loader2 className="w-7 h-7 animate-spin" />
+                      ) : isRecording ? (
+                        <MicOff className="w-7 h-7" />
+                      ) : (
+                        <Mic className="w-7 h-7" />
+                      )}
                     </button>
 
                     <p className="text-xs font-semibold text-slate-700">
-                      {isRecording ? t.voiceRecording : t.voiceTapToRecord}
+                      {isTranscribing
+                        ? (lang === 'id' ? 'Memproses rekaman suara Mama... ✨' : 'Transcribing voice with AI... ✨')
+                        : isRecording
+                        ? t.voiceRecording
+                        : t.voiceTapToRecord}
                     </p>
+
+                    {voiceNotice && (
+                      <p className="text-[11px] text-amber-700 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+                        {voiceNotice}
+                      </p>
+                    )}
 
                     {isRecording && (
                       <button
                         type="button"
                         onClick={stopVoiceRecording}
-                        className="text-[11px] font-bold text-rose-500 hover:underline"
+                        className="text-[11px] font-bold text-rose-500 hover:underline cursor-pointer"
                       >
                         {t.voiceStop}
                       </button>

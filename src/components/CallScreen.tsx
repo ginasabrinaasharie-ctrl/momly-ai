@@ -367,11 +367,28 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang }) => {
           )}
 
           {callStatus === 'listening' && (
-            <div className="absolute w-44 h-44 rounded-full bg-emerald-500/20 animate-ping" />
+            <>
+              <div
+                className={`absolute rounded-full transition-all duration-150 pointer-events-none ${
+                  audioLevel > 5 || latestUserText
+                    ? 'w-56 h-56 bg-emerald-400/30 ring-4 ring-emerald-300/60 animate-pulse'
+                    : 'w-44 h-44 bg-emerald-500/15'
+                }`}
+              />
+              {(audioLevel > 15 || latestUserText) && (
+                <div className="absolute w-64 h-64 rounded-full bg-teal-400/25 animate-ping pointer-events-none" />
+              )}
+            </>
           )}
 
           {/* Momly Illustrated Avatar */}
-          <div className="relative p-1 rounded-full bg-gradient-to-tr from-[#F07B6B] via-[#F5A898] to-[#9B8EC4] shadow-2xl shadow-[#F07B6B]/30">
+          <div
+            className={`relative p-1 rounded-full transition-all duration-200 ${
+              callStatus === 'listening' && (audioLevel > 5 || latestUserText)
+                ? 'bg-gradient-to-tr from-emerald-400 via-teal-300 to-[#F07B6B] shadow-2xl shadow-emerald-400/60 ring-4 ring-emerald-300/80 scale-105'
+                : 'bg-gradient-to-tr from-[#F07B6B] via-[#F5A898] to-[#9B8EC4] shadow-2xl shadow-[#F07B6B]/30'
+            }`}
+          >
             <MomlyAvatar
               size="xl"
               pose={
@@ -400,17 +417,21 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang }) => {
 
           {callStatus === 'listening' && (
             <div className="flex flex-col items-center gap-1.5">
-              <div className="flex items-center justify-center gap-2 text-emerald-300 font-medium text-xs sm:text-sm">
-                <span className={`w-2.5 h-2.5 rounded-full ${audioLevel > 3 ? 'bg-emerald-400 animate-ping' : 'bg-emerald-500'}`} />
-                <span>{audioLevel > 3 ? (lang === 'id' ? 'Suara Mama Terdengar...' : 'Hearing Mama...') : t.listening}</span>
+              <div className="flex items-center justify-center gap-2 font-bold text-xs sm:text-sm transition-colors">
+                <span className={`w-2.5 h-2.5 rounded-full ${audioLevel > 4 || latestUserText ? 'bg-emerald-400 animate-ping shadow-lg shadow-emerald-400' : 'bg-emerald-500'}`} />
+                <span className={audioLevel > 4 || latestUserText ? 'text-emerald-300' : 'text-emerald-200/90'}>
+                  {audioLevel > 4 || latestUserText
+                    ? (lang === 'id' ? '🎙️ Suara Mama Terdengar...' : '🎙️ Hearing Mama speak...')
+                    : t.listening}
+                </span>
               </div>
               {/* Dynamic VU Meter bars responding to physical mic volume */}
-              <div className="flex items-center gap-1 h-5 justify-center">
-                <span className="w-1 bg-emerald-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, Math.min(20, audioLevel * 1.2))}px` }} />
-                <span className="w-1 bg-emerald-300 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, Math.min(24, audioLevel * 1.6))}px` }} />
-                <span className="w-1 bg-teal-300 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, Math.min(20, audioLevel * 1.3))}px` }} />
-                <span className="w-1 bg-emerald-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, Math.min(22, audioLevel * 1.5))}px` }} />
-                <span className="w-1 bg-teal-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, Math.min(16, audioLevel * 1.0))}px` }} />
+              <div className="flex items-center gap-1 h-6 justify-center px-3 py-0.5 rounded-full bg-black/20 backdrop-blur-xs">
+                <span className="w-1 bg-emerald-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, Math.min(22, (audioLevel + (latestUserText ? 10 : 0)) * 1.2))}px` }} />
+                <span className="w-1 bg-emerald-300 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, Math.min(26, (audioLevel + (latestUserText ? 12 : 0)) * 1.5))}px` }} />
+                <span className="w-1 bg-teal-300 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, Math.min(20, (audioLevel + (latestUserText ? 8 : 0)) * 1.1))}px` }} />
+                <span className="w-1 bg-emerald-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, Math.min(24, (audioLevel + (latestUserText ? 14 : 0)) * 1.4))}px` }} />
+                <span className="w-1 bg-teal-400 rounded-full transition-all duration-75" style={{ height: `${Math.max(4, Math.min(18, (audioLevel + (latestUserText ? 9 : 0)) * 1.0))}px` }} />
               </div>
             </div>
           )}
@@ -436,17 +457,36 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang }) => {
           {/* Dynamic Action Buttons */}
           {callStatus === 'listening' ? (
             <div className="pt-2 flex flex-col items-center gap-1.5">
+              {/* Live Speech Recognition Transcript Floating Pill */}
+              {latestUserText && (
+                <div className="max-w-xs mx-auto mb-1 px-3 py-1.5 rounded-full bg-emerald-950/70 border border-emerald-400/40 text-emerald-200 text-[11px] font-medium flex items-center justify-center gap-2 shadow-lg">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                  <span className="truncate">"{latestUserText}"</span>
+                </div>
+              )}
+
               <button
                 onClick={() => handleUserFinishedSpeaking()}
-                className="px-6 py-3 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xl mx-auto active:scale-95 cursor-pointer bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/40 animate-pulse border-2 border-emerald-300/40"
+                className={`px-6 py-3 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xl mx-auto active:scale-95 cursor-pointer border-2 ${
+                  latestUserText.trim()
+                    ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white shadow-emerald-500/40 border-emerald-300/50 animate-pulse'
+                    : 'bg-emerald-600/50 hover:bg-emerald-600/70 text-emerald-100 border-emerald-400/30'
+                }`}
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
                 <span>
                   {latestUserText.trim()
-                    ? (lang === 'id' ? 'Selesai Bicara (Kirim ke Momly) ✨' : 'Done Speaking (Send to Momly) ✨')
-                    : (lang === 'id' ? 'Selesai Bicara (Ketuk untuk Jawab) ✨' : 'Done Speaking (Tap to Reply) ✨')}
+                    ? (lang === 'id' ? 'Selesai Curhat (Kirim ke Momly) ✨' : 'Done Speaking (Send to Momly) ✨')
+                    : (lang === 'id' ? 'Momly Mendengarkan (Bicara Saja Langsung) 🎙️' : 'Momly is Listening (Speak Freely) 🎙️')}
                 </span>
               </button>
+
+              <p className="text-[10px] text-slate-300/80 px-2 italic text-center">
+                {lang === 'id'
+                  ? 'Bicara saja langsung ya Mama, Momly otomatis menjawab saat ada jeda suara'
+                  : 'Just speak naturally, Momly automatically replies after natural pauses'}
+              </p>
+
               {micNotice && (
                 <div className="text-amber-200 text-[11px] font-medium bg-amber-950/80 px-3 py-1.5 rounded-xl border border-amber-400/40 animate-bounce text-center">
                   {micNotice}

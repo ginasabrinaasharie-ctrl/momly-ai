@@ -16,6 +16,33 @@ class SpeechService {
   private currentAudio: HTMLAudioElement | null = null;
   private speakingWatchdog: any = null;
   private currentLang: Language = 'en';
+  private accumulatedFinalText = '';
+
+  /**
+   * Remove stuttered word & phrase repetitions produced by Android Chrome speech recognizer.
+   */
+  public cleanDuplicateSpeech(text: string): string {
+    if (!text) return '';
+    // 1. Remove immediate duplicate single words (e.g. "sore sore" -> "sore")
+    let cleaned = text.replace(/\b([a-zA-Z0-9\u00C0-\u017F]+)(?:\s+\1\b)+/gi, '$1');
+
+    // 2. Remove immediate duplicate multi-word phrases (e.g. "sore ini pulang sore ini pulang" -> "sore ini pulang")
+    const words = cleaned.split(/\s+/);
+    if (words.length >= 4) {
+      for (let len = Math.min(6, Math.floor(words.length / 2)); len >= 2; len--) {
+        for (let i = 0; i <= words.length - (len * 2); i++) {
+          const phrase1 = words.slice(i, i + len).join(' ').toLowerCase();
+          const phrase2 = words.slice(i + len, i + (len * 2)).join(' ').toLowerCase();
+          if (phrase1 === phrase2) {
+            words.splice(i + len, len);
+            i--;
+          }
+        }
+      }
+      cleaned = words.join(' ');
+    }
+    return cleaned;
+  }
 
   constructor() {
     this.initRecognition();
@@ -273,18 +300,30 @@ class SpeechService {
         handlers.onStart?.();
       };
 
+      this.accumulatedFinalText = '';
       this.recognition.onresult = (event: any) => {
-        let accumulated = '';
-        let isFinal = false;
-        for (let i = 0; i < event.results.length; ++i) {
-          accumulated += event.results[i][0].transcript + ' ';
+        let currentInterim = '';
+        let isFinalDetected = false;
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const item = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            isFinal = true;
+            isFinalDetected = true;
+            const cleanPart = item.trim();
+            // Prevent Android Chrome from repeating previous final phrases
+            if (!this.accumulatedFinalText.toLowerCase().endsWith(cleanPart.toLowerCase())) {
+              this.accumulatedFinalText += (this.accumulatedFinalText ? ' ' : '') + cleanPart;
+            }
+          } else {
+            currentInterim = item;
           }
         }
-        const clean = accumulated.trim();
-        if (clean) {
-          handlers.onResult(clean, isFinal);
+
+        let full = (this.accumulatedFinalText + ' ' + currentInterim).trim();
+        full = this.cleanDuplicateSpeech(full);
+
+        if (full) {
+          handlers.onResult(full, isFinalDetected);
         }
       };
 

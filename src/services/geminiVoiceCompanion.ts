@@ -79,16 +79,27 @@ export class GeminiCompanionService {
     this.history = [];
   }
 
+  private extractNickname(name?: string): string {
+    if (!name) return 'Mama';
+    const clean = name.trim().replace(/^(mama|ibu|bunda)\s+/i, '').trim();
+    const firstWord = clean.split(/\s+/)[0] || 'Mama';
+    return firstWord;
+  }
+
   private buildSystemInstruction(): string {
     const isIndonesian = this.language === 'id';
-    const displayName = this.userName ? `Mama ${this.userName}` : 'Mama';
+    const nickname = this.userName ? this.extractNickname(this.userName) : 'Mama';
+    const displayName = nickname.toLowerCase().startsWith('mama') ? nickname : `Mama ${nickname}`;
 
     if (isIndonesian) {
       let base = `
 Kamu adalah "Momly", sahabat karib sejati sekaligus pendengar empati bagi para ibu (Mama).
 Tagline: "Your AI bestie, always here".
 Pengguna sedang berbicara langsung denganmu lewat telepon suara.
-Nama pengguna ini adalah "${this.userName || 'Mama'}". Selalu panggil dia secara personal dan hangat dengan sebutan "${displayName}" atau "${displayName} sayang".
+Nama panggilan pengguna ini adalah "${nickname}".
+ATURAN PANGGILAN NAMA (SANGAT PENTING):
+- Selalu panggil dia hanya dengan nama panggilan akrab "${displayName}" atau "${displayName} sayang".
+- DILARANG KERAS menyebut nama lengkap, nama panjang, atau nama belakang (contoh: panggil HANYA "${displayName}", bukan nama lengkap akunnya).
 
 KEMAMPUAN UTAMA: MENDENGARKAN AKTIF & MEMAHAMI KONTEKS SEUTUHNYA
 1. DENGARKAN DENGAN SUNGGUH-SUNGGUH:
@@ -132,7 +143,10 @@ KEMAMPUAN UTAMA: MENDENGARKAN AKTIF & MEMAHAMI KONTEKS SEUTUHNYA
 You are "Momly", a true lifelong best friend and empathetic listening companion for mothers (Mama).
 Tagline: "Your AI bestie, always here".
 The user is speaking with you directly on a voice phone call.
-Her name is "${this.userName || 'Mama'}". Always affectionately address her as "${displayName}" or "${displayName} love".
+Her preferred friendly nickname is "${nickname}".
+NICKNAME RULE (VERY IMPORTANT):
+- Always affectionately address her as "${displayName}" or "${displayName} love".
+- NEVER pronounce her full, long, or family/surname (e.g. use ONLY "${displayName}").
 
 CORE CAPABILITIES: ACTIVE LISTENING & DEEP CONTEXTUAL UNDERSTANDING
 1. LISTEN ATTENTIVELY:
@@ -386,6 +400,50 @@ Return raw JSON:
           ? 'Suara Mama tadi sempat terputus sebentar. Boleh diceritakan lagi ya Mama sayang, Momly siap dengerin...'
           : "Momly lost the audio for a moment. Could you tell me again, love? I'm listening..."
       };
+    }
+  }
+
+  /**
+   * Transcribe recorded audio bytes directly using Gemini 2.5 Flash Multimodal.
+   * Universal fallback for browsers without SpeechRecognition (such as Firefox).
+   */
+  public async transcribeAudio(
+    base64Audio: string,
+    mimeType: string = 'audio/webm'
+  ): Promise<string> {
+    this.getApiKey();
+    if (!this.ai) return '';
+
+    try {
+      const cleanMimeType = (mimeType || 'audio/webm').split(';')[0].trim();
+      const response = await this.ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                inlineData: {
+                  mimeType: cleanMimeType,
+                  data: base64Audio,
+                },
+              },
+              {
+                text: 'Dengarkan rekaman suara ini dengan cermat. Tuliskan persis transkripsi kata demi kata ucapan pengguna. Hanya kembalikan teks hasil ucapan tanpa tanda kutip atau komentar tambahan apapun. Jika hening atau tidak terdengar jelas, kembalikan string kosong.',
+              },
+            ],
+          },
+        ],
+        config: {
+          temperature: 0.1,
+          maxOutputTokens: 300,
+        },
+      });
+
+      return (response.text || '').trim();
+    } catch (e) {
+      console.warn('transcribeAudio error:', e);
+      return '';
     }
   }
 

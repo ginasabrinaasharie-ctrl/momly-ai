@@ -214,7 +214,7 @@ export const translations: Record<Language, Translations> = {
     journal: {
       title: 'Heart Journal',
       subtitle: 'Gather your daily gratitude & celebrate your little wins.',
-      newEntryButton: '+ Log Today’s Moments',
+      newEntryButton: 'Log Today’s Moments',
       emptyTitle: 'Your Journal is Fresh & Clean',
       emptyDesc: 'No entries yet. Take a gentle minute to record a sweet moment or a tiny victory today, Mama.',
       clearAll: 'Clear All Journals',
@@ -391,7 +391,7 @@ export const translations: Record<Language, Translations> = {
     journal: {
       title: 'Jurnal Hati',
       subtitle: 'Kumpulkan rasa syukur & rayakan kemenangan kecilmu setiap hari.',
-      newEntryButton: '+ Catat Momen Hari Ini',
+      newEntryButton: 'Catat Momen Hari Ini',
       emptyTitle: 'Buku Jurnalmu Masih Rapi',
       emptyDesc: 'Belum ada catatan hari ini. Luangkan 1 menit untuk mencatat hal manis atau kemenangan kecilmu, Mama.',
       clearAll: 'Hapus Semua Jurnal',
