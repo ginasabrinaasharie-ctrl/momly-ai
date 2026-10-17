@@ -420,104 +420,109 @@ class SpeechService {
     onEnd?: () => void
   ): Promise<boolean> {
     return new Promise(async (resolve) => {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const candidateModels = ['gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts'];
 
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal,
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [{ text }]
-                }
-              ],
-              generationConfig: {
-                temperature: 1.25,
-                responseModalities: ['AUDIO'],
-                speechConfig: {
-                  voiceConfig: {
-                    prebuiltVoiceConfig: {
-                      voiceName: 'Tova'
+      for (const model of candidateModels) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4500);
+
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [{ text }]
+                  }
+                ],
+                generationConfig: {
+                  temperature: 1.25,
+                  responseModalities: ['AUDIO'],
+                  speechConfig: {
+                    voiceConfig: {
+                      prebuiltVoiceConfig: {
+                        voiceName: 'Tova'
+                      }
                     }
                   }
                 }
-              }
-            }),
+              }),
+            }
+          );
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            console.warn(`${model} HTTP response status:`, response.status, response.statusText);
+            continue;
           }
-        );
-        clearTimeout(timeoutId);
 
-        if (!response.ok) {
-          console.warn('Gemini TTS HTTP response status:', response.status, response.statusText);
-          resolve(false);
-          return;
-        }
+          const data = await response.json();
+          const parts = data.candidates?.[0]?.content?.parts || [];
+          const audioPart = parts.find((p: any) => p.inlineData && p.inlineData.data);
+          const audioData = audioPart?.inlineData;
 
-        const data = await response.json();
-        const parts = data.candidates?.[0]?.content?.parts || [];
-        const audioPart = parts.find((p: any) => p.inlineData && p.inlineData.data);
-        const audioData = audioPart?.inlineData;
-
-        if (!audioData || !audioData.data) {
-          console.warn('Gemini TTS did not return audio data, falling back.');
-          resolve(false);
-          return;
-        }
-
-        const mime = audioData.mimeType || 'audio/wav';
-        const audio = new Audio(`data:${mime};base64,${audioData.data}`);
-        audio.volume = 1.0;
-        this.currentAudio = audio;
-
-        let hasEnded = false;
-        const triggerEnd = () => {
-          if (hasEnded) return;
-          hasEnded = true;
-          if (this.speakingWatchdog) {
-            clearTimeout(this.speakingWatchdog);
-            this.speakingWatchdog = null;
+          if (!audioData || !audioData.data) {
+            console.warn(`${model} did not return audio data, trying next candidate.`);
+            continue;
           }
-          this.isSpeaking = false;
-          this.currentAudio = null;
-          onEnd?.();
-          resolve(true);
-        };
 
-        audio.onplay = () => {
-          this.isSpeaking = true;
-          onStart?.();
-        };
+          const mime = audioData.mimeType || 'audio/wav';
+          const audio = new Audio(`data:${mime};base64,${audioData.data}`);
+          audio.volume = 1.0;
+          this.currentAudio = audio;
 
-        audio.onended = () => {
-          triggerEnd();
-        };
+          let hasEnded = false;
+          const triggerEnd = () => {
+            if (hasEnded) return;
+            hasEnded = true;
+            if (this.speakingWatchdog) {
+              clearTimeout(this.speakingWatchdog);
+              this.speakingWatchdog = null;
+            }
+            this.isSpeaking = false;
+            this.currentAudio = null;
+            onEnd?.();
+            resolve(true);
+          };
 
-        audio.onerror = () => {
-          triggerEnd();
-        };
+          audio.onplay = () => {
+            this.isSpeaking = true;
+            onStart?.();
+          };
 
-        // Safety watchdog: ensure onEnd triggers even if browser stalls
-        const estimatedSeconds = Math.max(4, Math.ceil(text.length / 12)) + 3;
-        this.speakingWatchdog = setTimeout(() => {
-          if (!hasEnded) {
+          audio.onended = () => {
             triggerEnd();
-          }
-        }, estimatedSeconds * 1000);
+          };
 
-        try {
-          await audio.play();
-        } catch (playErr) {
-          triggerEnd();
+          audio.onerror = () => {
+            triggerEnd();
+          };
+
+          // Safety watchdog: ensure onEnd triggers even if browser stalls
+          const estimatedSeconds = Math.max(4, Math.ceil(text.length / 12)) + 3;
+          this.speakingWatchdog = setTimeout(() => {
+            if (!hasEnded) {
+              triggerEnd();
+            }
+          }, estimatedSeconds * 1000);
+
+          try {
+            await audio.play();
+            return;
+          } catch (playErr) {
+            triggerEnd();
+            return;
+          }
+        } catch (err) {
+          console.warn(`Error generating audio with ${model}:`, err);
         }
-      } catch (err) {
-        console.warn('Gemini TTS error:', err);
-        resolve(false);
       }
+
+      resolve(false);
     });
   }
 
