@@ -89,6 +89,8 @@ class SpeechService {
   private mediaStream: MediaStream | null = null;
   private audioContext: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
+  private streamSource: MediaStreamAudioSourceNode | null = null;
+  private connectedStream: MediaStream | null = null;
   private mediaRecorder: MediaRecorder | null = null;
   private recordedChunks: Blob[] = [];
 
@@ -102,9 +104,20 @@ class SpeechService {
         this.mediaStream.getTracks().forEach((t) => t.stop());
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.mediaStream = stream;
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          }
+        });
+      } catch (e) {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
 
+      this.mediaStream = stream;
       await this.ensureAudioContextRunning();
 
       return { ok: true };
@@ -112,9 +125,9 @@ class SpeechService {
       console.warn('Microphone permission error:', err);
       let msg = 'Izin mikrofon belum aktif.';
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        msg = 'Izin mikrofon belum aktif. Mohon klik ikon gembok / kamera di baris URL browser dan pilih "Allow" / "Izinkan" untuk Mikrofon.';
+        msg = 'Izin mikrofon belum aktif. Mohon klik ikon gembok / kamera di baris URL browser atau izinkan di pengaturan HP.';
       } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        msg = 'Tidak ada perangkat mikrofon yang terdeteksi pada komputermu.';
+        msg = 'Tidak ada perangkat mikrofon yang terdeteksi pada perangkatmu.';
       }
       return { ok: false, error: msg };
     }
@@ -123,13 +136,31 @@ class SpeechService {
   public async ensureAudioContextRunning(): Promise<void> {
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!this.audioContext && AudioContextClass && this.mediaStream) {
+      if (!this.audioContext && AudioContextClass) {
         this.audioContext = new AudioContextClass();
-        const source = this.audioContext.createMediaStreamSource(this.mediaStream);
-        this.analyser = this.audioContext.createAnalyser();
-        this.analyser.fftSize = 64;
-        source.connect(this.analyser);
       }
+
+      if (this.audioContext && this.mediaStream && this.connectedStream !== this.mediaStream) {
+        if (this.streamSource) {
+          try {
+            this.streamSource.disconnect();
+          } catch (e) {}
+          this.streamSource = null;
+        }
+
+        try {
+          this.streamSource = this.audioContext.createMediaStreamSource(this.mediaStream);
+          if (!this.analyser) {
+            this.analyser = this.audioContext.createAnalyser();
+            this.analyser.fftSize = 64;
+          }
+          this.streamSource.connect(this.analyser);
+          this.connectedStream = this.mediaStream;
+        } catch (err) {
+          console.warn('Failed to connect stream to analyser:', err);
+        }
+      }
+
       if (this.audioContext && this.audioContext.state === 'suspended') {
         await this.audioContext.resume();
       }
@@ -174,10 +205,12 @@ class SpeechService {
   }
 
   public async startAudioRecording() {
-    if (!this.mediaStream || !this.mediaStream.active) {
+    if (!this.mediaStream || !this.mediaStream.active || this.mediaStream.getAudioTracks().every((t) => t.readyState === 'ended')) {
       await this.requestMicrophonePermission();
     }
     if (!this.mediaStream) return;
+
+    await this.ensureAudioContextRunning();
 
     // Cleanly detach and stop any existing recorder so its chunks NEVER leak
     if (this.mediaRecorder) {
@@ -218,15 +251,23 @@ class SpeechService {
 
     return new Promise((resolve) => {
       const rec = this.mediaRecorder!;
-      const onStop = () => {
+      let resolved = false;
+
+      const finish = () => {
+        if (resolved) return;
+        resolved = true;
         const rawMime = rec.mimeType || 'audio/webm';
         const mimeType = rawMime.split(';')[0].trim();
-        // Grab current chunks and immediately empty recordedChunks so nothing leaks to next turn!
         const currentChunks = [...this.recordedChunks];
         this.recordedChunks = [];
 
+        if (currentChunks.length === 0) {
+          resolve(null);
+          return;
+        }
+
         const blob = new Blob(currentChunks, { type: rawMime });
-        if (blob.size < 300) {
+        if (blob.size < 150) {
           resolve(null);
           return;
         }
@@ -241,10 +282,24 @@ class SpeechService {
         reader.readAsDataURL(blob);
       };
 
+      // Safety watchdog: ensure promise resolves within 800ms even if stop event delays
+      const safetyTimeout = setTimeout(finish, 800);
+
+      const onStop = () => {
+        clearTimeout(safetyTimeout);
+        finish();
+      };
+
       rec.addEventListener('stop', onStop, { once: true });
       try {
+        if (rec.state === 'recording') {
+          try {
+            rec.requestData();
+          } catch (e) {}
+        }
         rec.stop();
       } catch (e) {
+        clearTimeout(safetyTimeout);
         this.recordedChunks = [];
         resolve(null);
       }
@@ -252,6 +307,13 @@ class SpeechService {
   }
 
   public stopMicrophoneStream() {
+    if (this.streamSource) {
+      try {
+        this.streamSource.disconnect();
+      } catch (e) {}
+      this.streamSource = null;
+    }
+    this.connectedStream = null;
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach((t) => t.stop());
       this.mediaStream = null;

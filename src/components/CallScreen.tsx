@@ -31,6 +31,11 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const speechTextRef = useRef<string>('');
   const isProcessingRef = useRef<boolean>(false);
+  const listenStartTimeRef = useRef<number>(0);
+  const vadSpokeInTurnRef = useRef<boolean>(false);
+  const vadSpeechFramesRef = useRef<number>(0);
+  const vadSilenceFramesRef = useRef<number>(0);
+  const [hasDetectedVoice, setHasDetectedVoice] = useState(false);
 
   // Call timer
   useEffect(() => {
@@ -40,13 +45,48 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
     return () => clearInterval(timer);
   }, []);
 
-  // Poll audio level when listening
+  // Poll audio level when listening and manage automatic Voice Activity Detection (VAD) turn-taking
   useEffect(() => {
     const meterInterval = setInterval(() => {
       if (callStatus === 'listening' && !isMuted) {
-        setAudioLevel(speechService.getAudioVolume());
+        const vol = speechService.getAudioVolume();
+        setAudioLevel(vol);
+
+        // Ignore first 500ms after Momly stops speaking to prevent speakerphone acoustic echo
+        if (Date.now() - listenStartTimeRef.current < 500) {
+          return;
+        }
+
+        if (!isProcessingRef.current) {
+          // Vocal energy detected (level >= 13)
+          if (vol >= 13) {
+            vadSpeechFramesRef.current += 1;
+            vadSilenceFramesRef.current = 0;
+            // After at least 2 frames (200ms) of consistent speech:
+            if (vadSpeechFramesRef.current >= 2) {
+              vadSpokeInTurnRef.current = true;
+              setHasDetectedVoice(true);
+            }
+          } else {
+            vadSpeechFramesRef.current = 0;
+            // User was speaking in this turn and is now quiet (silence/pause)
+            if (vadSpokeInTurnRef.current) {
+              vadSilenceFramesRef.current += 1;
+              // If user spoke and has now paused for ~2.2 seconds (22 frames @ 100ms):
+              if (vadSilenceFramesRef.current >= 22) {
+                vadSpokeInTurnRef.current = false;
+                vadSilenceFramesRef.current = 0;
+                setHasDetectedVoice(false);
+                handleUserFinishedSpeaking();
+              }
+            }
+          }
+        }
       } else {
         setAudioLevel(0);
+        vadSpeechFramesRef.current = 0;
+        vadSilenceFramesRef.current = 0;
+        setHasDetectedVoice(false);
       }
     }, 100);
     return () => clearInterval(meterInterval);
@@ -76,6 +116,12 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
     if (isMuted || isProcessingRef.current) return;
 
     setCallStatus('listening');
+    listenStartTimeRef.current = Date.now();
+    vadSpokeInTurnRef.current = false;
+    vadSpeechFramesRef.current = 0;
+    vadSilenceFramesRef.current = 0;
+    setHasDetectedVoice(false);
+
     await speechService.ensureAudioContextRunning();
     speechService.startAudioRecording();
 
@@ -84,6 +130,8 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
         if (isProcessingRef.current) return;
         speechTextRef.current = text;
         setLatestUserText(text);
+        vadSpokeInTurnRef.current = true;
+        setHasDetectedVoice(true);
 
         // Reset silence timer
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
@@ -95,10 +143,10 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
         const endsWithPunctuation = /[.?!]$/.test(clean);
 
         // Natural turn-taking timing:
-        // - Titik / tanda tanya: 2.5s (was 1.5s)
-        // - isFinal (selesai frasa): 4.0s (was 2.5s)
-        // - Jeda umum: 4.5s (was 3.5s)
-        const timeoutMs = endsWithPunctuation ? 2500 : isFinal ? 4000 : 4500;
+        // - Titik / tanda tanya: 2.0s
+        // - isFinal (selesai frasa): 2.5s
+        // - Jeda umum: 3.5s
+        const timeoutMs = endsWithPunctuation ? 2000 : isFinal ? 2500 : 3500;
 
         silenceTimerRef.current = setTimeout(() => {
           handleUserFinishedSpeaking(speechTextRef.current);
@@ -106,6 +154,9 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
       },
       onError: (err: string) => {
         console.warn('Speech err:', err);
+        if (err && err.includes('Izin mic ditolak')) {
+          setMicNotice(err);
+        }
       },
       onEnd: () => {
         // Do not force-submit on interim onEnd, let silence timer or manual button control turn-taking
@@ -126,6 +177,11 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
     if (isProcessingRef.current) return;
 
     isProcessingRef.current = true;
+    vadSpokeInTurnRef.current = false;
+    vadSpeechFramesRef.current = 0;
+    vadSilenceFramesRef.current = 0;
+    setHasDetectedVoice(false);
+
     if (silenceTimerRef.current) {
       clearTimeout(silenceTimerRef.current);
       silenceTimerRef.current = null;
@@ -143,7 +199,7 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
     }
 
     // Check Rate Limiting & Safe Quota before making AI call
-    if (textToSend || (audioData && audioData.base64 && audioData.base64.length > 200)) {
+    if (textToSend || (audioData && audioData.base64 && audioData.base64.length > 100)) {
       const quota = usageGuard.consumeTurn();
       if (!quota.allowed) {
         setCallStatus('speaking');
@@ -213,7 +269,7 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
 
     // CASE 2: Web Speech API missed words, but MediaRecorder captured physical audio bytes!
     // Send audio directly to Gemini 2.5 Flash Multimodal
-    if (audioData && audioData.base64 && audioData.base64.length > 200) {
+    if (audioData && audioData.base64 && audioData.base64.length > 100) {
       setMicNotice('');
       setTextInput('');
       setCallStatus('thinking');
@@ -516,23 +572,23 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
               <button
                 onClick={() => handleUserFinishedSpeaking()}
                 className={`px-6 py-3 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xl mx-auto active:scale-95 cursor-pointer border-2 ${
-                  latestUserText.trim()
+                  latestUserText.trim() || hasDetectedVoice
                     ? 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-white shadow-emerald-500/40 border-emerald-300/50 animate-pulse'
                     : 'bg-emerald-600/50 hover:bg-emerald-600/70 text-emerald-100 border-emerald-400/30'
                 }`}
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
                 <span>
-                  {latestUserText.trim()
+                  {latestUserText.trim() || hasDetectedVoice
                     ? (lang === 'id' ? 'Selesai Curhat (Kirim ke Momly) ✨' : 'Done Speaking (Send to Momly) ✨')
-                    : (lang === 'id' ? 'Momly Mendengarkan (Bicara Saja Langsung) 🎙️' : 'Momly is Listening (Speak Freely) 🎙️')}
+                    : (lang === 'id' ? '🎙️ Momly Mendengarkan (Bicara Saja)' : '🎙️ Momly is Listening (Speak Freely)')}
                 </span>
               </button>
 
-              <p className="text-[10px] text-slate-300/80 px-2 italic text-center">
+              <p className="text-[11px] text-emerald-200/90 font-medium px-2 text-center">
                 {lang === 'id'
-                  ? 'Bicara santai ya Mama, ketuk tombol "Selesai Curhat" bila sudah selesai'
-                  : 'Speak comfortably Mama, tap "Done Speaking" when you are finished'}
+                  ? 'Bicara santai ya Mama. Jeda 2 detik akan otomatis dijawab Momly, atau ketuk tombol di atas.'
+                  : 'Speak freely Mama. A 2-second pause will auto-reply, or tap the button above.'}
               </p>
 
               {micNotice && (
