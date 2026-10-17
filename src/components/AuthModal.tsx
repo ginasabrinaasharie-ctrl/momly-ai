@@ -18,6 +18,7 @@ import {
   loginWithEmailPassword,
   registerWithEmailPassword,
 } from '../services/firebase.ts';
+import { Capacitor } from '@capacitor/core';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -148,6 +149,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   // Handle Official Google OAuth Popup
   const handleGoogleLogin = async () => {
+    if (Capacitor.isNativePlatform()) {
+      setAuthError(
+        isIndonesian
+          ? 'Di aplikasi Android, silakan gunakan tab "Masuk / Daftar dengan Email" atau tombol "✨ Mode Judges (1-Klik)". Fitur Google Web Popup didukung di versi browser.'
+          : 'On the Android app, please use "Sign in with Email" or "✨ Judges Mode (1-Click)". Google Web Popup is supported on web browsers.'
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     setAuthError('');
     try {

@@ -302,6 +302,7 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
       if (isCancelled) return;
 
       setLatestModelText(greeting);
+      setCallStatus('speaking');
 
       speechService.speak(
         greeting,

@@ -421,11 +421,15 @@ class SpeechService {
   ): Promise<boolean> {
     return new Promise(async (resolve) => {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+
         const response = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
             body: JSON.stringify({
               contents: [
                 {
@@ -446,6 +450,7 @@ class SpeechService {
             }),
           }
         );
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
           console.warn('Gemini TTS HTTP response status:', response.status, response.statusText);
@@ -531,9 +536,10 @@ class SpeechService {
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
-      // Intelligently detect language from spoken text so voice accent matches words
-      const hasIndonesianWords = /\b(aku|kamu|mama|lagi|bisa|banget|senang|cerita|bikin|aplikasi|nonton|kok|ya|dan|yang|di|ini|itu|dong|nggak|enggak|udah|yuk|sama|kan|hati|wah|hai|halo|capek|lelah|tenang|peluk)\b/i.test(text);
-      const isIndonesian = this.currentLang === 'id' || hasIndonesianWords;
+
+      // Determine voice language:
+      // Strictly honor current selected language so English text is NEVER spoken by an Indonesian voice
+      const isIndonesian = this.currentLang === 'id';
 
       utterance.lang = isIndonesian ? 'id-ID' : 'en-US';
       utterance.rate = 0.95;
