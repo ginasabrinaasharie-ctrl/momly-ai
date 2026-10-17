@@ -28,6 +28,7 @@ import { geminiCompanion } from './services/geminiVoiceCompanion.ts';
 import { speechService } from './services/speechService.ts';
 import { usageGuard, AuthUser } from './services/usageGuard.ts';
 import { logoutFirebase } from './services/firebase.ts';
+import { cloudSync } from './services/cloudSync.ts';
 import { Language, translations } from './services/i18n.ts';
 import { JournalEntry } from './types/journal.ts';
 
@@ -78,7 +79,7 @@ export function App() {
   const [memories, setMemories] = useState<StoredMemory[]>([]);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
 
-  // Load user data whenever currentUser changes (prevents cross-user data leakage)
+  // Load user data whenever currentUser changes (local-first cache + transparent cloud sync)
   useEffect(() => {
     if (!currentUser) {
       setMemories([]);
@@ -88,48 +89,45 @@ export function App() {
     }
 
     const userId = currentUser.id;
+    let isCancelled = false;
 
-    // 1. Nickname
+    // 1. Initial quick local state read
+    const fallbackNick = extractNickname(currentUser.name);
     try {
       const savedNick = localStorage.getItem(`momly_nickname_${userId}`);
-      const nick = savedNick || extractNickname(currentUser.name);
+      const nick = savedNick || fallbackNick;
       setUserName(nick);
       geminiCompanion.setUserName(nick);
-    } catch (e) {
-      console.warn('Failed to load nickname:', e);
-    }
+    } catch (e) {}
 
-    // 2. Memories (User-scoped)
-    try {
-      let saved = localStorage.getItem(`momly_memories_${userId}`);
-      if (!saved && currentUser.role === 'judge') {
-        saved = localStorage.getItem('momly_memories');
+    // 2. Fetch and reconcile cloud data (or local fallback)
+    cloudSync.loadUserData(userId).then((data) => {
+      if (isCancelled) return;
+      if (data.nickname) {
+        setUserName(data.nickname);
+        geminiCompanion.setUserName(data.nickname);
       }
-      if (saved) {
-        setMemories(JSON.parse(saved));
-      } else {
-        setMemories([]);
+      if (data.memories && data.memories.length > 0) {
+        setMemories(data.memories);
+      } else if (currentUser.role === 'judge') {
+        try {
+          const judgeMem = localStorage.getItem('momly_memories');
+          if (judgeMem) setMemories(JSON.parse(judgeMem));
+        } catch (e) {}
       }
-    } catch (e) {
-      console.warn('Failed to load memories:', e);
-      setMemories([]);
-    }
+      if (data.journalEntries && data.journalEntries.length > 0) {
+        setJournalEntries(data.journalEntries);
+      } else if (currentUser.role === 'judge') {
+        try {
+          const judgeJournal = localStorage.getItem('momly_heart_journal');
+          if (judgeJournal) setJournalEntries(JSON.parse(judgeJournal));
+        } catch (e) {}
+      }
+    });
 
-    // 3. Heart Journal (User-scoped)
-    try {
-      let savedJournal = localStorage.getItem(`momly_heart_journal_${userId}`);
-      if (!savedJournal && currentUser.role === 'judge') {
-        savedJournal = localStorage.getItem('momly_heart_journal');
-      }
-      if (savedJournal) {
-        setJournalEntries(JSON.parse(savedJournal));
-      } else {
-        setJournalEntries([]);
-      }
-    } catch (e) {
-      console.warn('Failed to load journal entries:', e);
-      setJournalEntries([]);
-    }
+    return () => {
+      isCancelled = true;
+    };
   }, [currentUser?.id]);
 
   const handleAuthSuccess = (user: AuthUser) => {
@@ -165,11 +163,7 @@ export function App() {
     setJournalEntries((prev) => {
       const updated = [entry, ...prev];
       if (currentUser?.id) {
-        try {
-          localStorage.setItem(`momly_heart_journal_${currentUser.id}`, JSON.stringify(updated));
-        } catch (e) {
-          console.warn('Failed to save journal entry to localStorage:', e);
-        }
+        cloudSync.saveUserData(currentUser.id, { journalEntries: updated });
       }
       return updated;
     });
@@ -179,11 +173,7 @@ export function App() {
     setJournalEntries((prev) => {
       const updated = prev.filter((item) => item.id !== id);
       if (currentUser?.id) {
-        try {
-          localStorage.setItem(`momly_heart_journal_${currentUser.id}`, JSON.stringify(updated));
-        } catch (e) {
-          console.warn('Failed to update journal entries in localStorage:', e);
-        }
+        cloudSync.saveUserData(currentUser.id, { journalEntries: updated });
       }
       return updated;
     });
@@ -199,7 +189,7 @@ export function App() {
     ) {
       setJournalEntries([]);
       if (currentUser?.id) {
-        localStorage.removeItem(`momly_heart_journal_${currentUser.id}`);
+        cloudSync.saveUserData(currentUser.id, { journalEntries: [] });
       }
     }
   };
@@ -213,7 +203,7 @@ export function App() {
     const nick = extractNickname(name);
     setUserName(nick);
     if (currentUser?.id) {
-      localStorage.setItem(`momly_nickname_${currentUser.id}`, nick);
+      cloudSync.saveUserData(currentUser.id, { nickname: nick });
     }
     localStorage.setItem('momly_user_name', nick);
     localStorage.setItem('momly_onboarding_shown', 'true');
@@ -264,11 +254,7 @@ export function App() {
       const updatedMemories = [newMemory, ...memories].slice(0, 50);
       setMemories(updatedMemories);
       if (currentUser?.id) {
-        try {
-          localStorage.setItem(`momly_memories_${currentUser.id}`, JSON.stringify(updatedMemories));
-        } catch (storageErr) {
-          console.warn('Storage quota exceeded, unable to persist new memory:', storageErr);
-        }
+        cloudSync.saveUserData(currentUser.id, { memories: updatedMemories });
       }
     } catch (e) {
       console.error(e);
@@ -280,7 +266,7 @@ export function App() {
   const handleClearMemories = () => {
     setMemories([]);
     if (currentUser?.id) {
-      localStorage.removeItem(`momly_memories_${currentUser.id}`);
+      cloudSync.saveUserData(currentUser.id, { memories: [] });
     }
   };
 

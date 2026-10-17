@@ -108,8 +108,8 @@ export const JournalModal: React.FC<JournalModalProps> = ({
     } else {
       setVoiceNotice(
         lang === 'id'
-          ? '🎙️ Merekam suara Mama (Firefox)... Bicara santai ya, lalu klik tombol lagi saat selesai.'
-          : '🎙️ Recording voice (Firefox)... Speak freely, then tap button when finished.'
+          ? '🎙️ Sedang mendengarkan cerita Mama... Bicara santai ya, lalu ketuk tombol lagi setelah selesai.'
+          : '🎙️ Listening to Mama... Speak comfortably, then tap the button when finished.'
       );
     }
   };

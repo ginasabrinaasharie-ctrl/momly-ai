@@ -384,10 +384,12 @@ class SpeechService {
   ): Promise<void> {
     this.stopSpeaking();
 
-    // Clean text of markdown characters and emojis so TTS doesn't vocalize emoji symbols
+    // Clean text of markdown characters, list numbers, bullet points, and emojis so TTS doesn't vocalize numbers or bullets
     const cleanText = text
+      .replace(/^[\s*#-]+(?:\d+\.|\*|-)?\s*/gm, '') // remove markdown list headers / bullet points
       .replace(/[*_#`~[\]]/g, '')
       .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '')
+      .replace(/\s+/g, ' ')
       .trim();
     if (!cleanText) {
       onEnd?.();
@@ -535,27 +537,53 @@ class SpeechService {
 
       utterance.lang = isIndonesian ? 'id-ID' : 'en-US';
       utterance.rate = 0.95;
-      utterance.pitch = 1.0;
       utterance.volume = 1.0;
+
+      const isMaleVoice = (v: SpeechSynthesisVoice) => {
+        const name = v.name.toLowerCase();
+        return (
+          name.includes('ardi') ||
+          name.includes('pria') ||
+          name.includes('male') ||
+          name.includes('david') ||
+          name.includes('george') ||
+          name.includes('guy') ||
+          name.includes('mark') ||
+          name.includes('stefan') ||
+          name.includes('richard') ||
+          name.includes('paul') ||
+          name.includes('james') ||
+          name.includes('michael')
+        );
+      };
 
       const voices = window.speechSynthesis.getVoices();
 
       if (isIndonesian) {
+        // Enforce female Indonesian voices, strictly filtering out male voices like Microsoft Ardi
         const preferredIdVoice =
-          voices.find((v) => v.name.includes('Gadis') && v.name.includes('Natural')) ||
-          voices.find((v) => v.name.includes('Gadis')) ||
-          voices.find((v) => v.name.toLowerCase().includes('indonesia') && v.lang.startsWith('id')) ||
-          voices.find((v) => v.lang.startsWith('id'));
-        if (preferredIdVoice) utterance.voice = preferredIdVoice;
+          voices.find((v) => (v.name.includes('Gadis') || v.name.includes('Siti') || v.name.includes('Damayanti') || /female|wanita|perempuan/i.test(v.name)) && !isMaleVoice(v)) ||
+          voices.find((v) => v.lang.startsWith('id') && !isMaleVoice(v)) ||
+          voices.find((v) => v.name.toLowerCase().includes('indonesia') && !isMaleVoice(v));
+
+        if (preferredIdVoice) {
+          utterance.voice = preferredIdVoice;
+          utterance.pitch = 1.05;
+        } else {
+          // If browser only has generic fallback, elevate pitch to guarantee a warm feminine voice
+          utterance.pitch = 1.25;
+        }
       } else {
         const preferredEnVoice =
-          voices.find((v) => v.name.includes('Jenny') && v.name.includes('Natural')) ||
-          voices.find((v) => v.name.includes('Ava') && v.name.includes('Natural')) ||
-          voices.find((v) => v.name.includes('Emma') && v.name.includes('Natural')) ||
-          voices.find((v) => v.name.includes('Samantha')) ||
-          voices.find((v) => v.name.includes('Google US English')) ||
-          voices.find((v) => v.lang.startsWith('en'));
-        if (preferredEnVoice) utterance.voice = preferredEnVoice;
+          voices.find((v) => (v.name.includes('Jenny') || v.name.includes('Ava') || v.name.includes('Emma') || v.name.includes('Samantha') || /female|woman/i.test(v.name)) && !isMaleVoice(v)) ||
+          voices.find((v) => v.lang.startsWith('en') && !isMaleVoice(v));
+
+        if (preferredEnVoice) {
+          utterance.voice = preferredEnVoice;
+          utterance.pitch = 1.05;
+        } else {
+          utterance.pitch = 1.2;
+        }
       }
 
       let hasEnded = false;

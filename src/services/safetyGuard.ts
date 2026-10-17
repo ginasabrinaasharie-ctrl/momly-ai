@@ -496,13 +496,27 @@ class SafetyGuardService {
       };
     }
 
-    // 2. Check for Critical Imminent Harm (suicide, self-harm, child violence)
+    // 2. Check for Critical Imminent Harm (suicide, self-harm, poisoning, jumping, cutting, child violence)
     const criticalImminentPatterns = [
-      /mau bunuh diri|ingin bunuh diri|akhiri hidup(ku)?|capek hidup pengen mati/i,
-      /mau mati aja|mau mati malam ini|ingin menyakiti diri|pengen nyilet|sayat tangan/i,
+      /mau bunuh diri|ingin bunuh diri|akhiri hidup(ku)?|capek hidup pengen mati|ingin menyudahi hidup|menyudahi hidup/i,
+      /mau mati aja|mau mati malam ini|ingin menyakiti diri|pengen nyilet|mending mati aja|gak mau hidup lagi|tidak ingin hidup lagi/i,
+      // Poisoning / ingesting harmful substances
+      /(minum|teguk|telan|konsumsi).*(racun|baygon|cairan pembersih|pemutih|obat nyamuk)/i,
+      /(overdosis|telan).*(obat tidur|semua obat|paracetamol)/i,
+      /drink poison|swallow poison|overdose on pills|drink bleach/i,
+      // Jumping / impact / hanging
+      /(melompat|lompat|loncat|terjun|jatuhkan diri|menjatuhkan diri).*(rel|kereta|gedung|jembatan|lantai|balkon|atap|jurang)/i,
+      /(tabrak|menabrakkan diri|lempar diri).*(kereta|truk|mobil|bus)/i,
+      /jump.*(train|tracks|building|bridge|balcony|roof|window|cliff)/i,
+      /throw myself in front of|step in front of train/i,
+      /gantung diri|gantung leher|jerat leher|cekik diri|hang myself|hang on a rope/i,
+      // Cutting / self-injury
+      /(menyayat|sayat|iris|potong|gores|silet).*(tangan|urat nadi|pergelangan|lengan|leher|urat|tubuh)/i,
+      /cut (my )?(wrist|arm|throat|veins)|slit (my )?(wrist|veins|throat)/i,
+      /cut my wrist|hurt myself|harm myself/i,
+      // Child harm
       /(banting|lempar|cekik|racuni|pukul|lukai|buang).*(anak|bayi)|(anak|bayi).*(banting|lempar|cekik|racuni|pukul|lukai|buang)/i,
       /kill myself|end my life|wanna die|want to die tonight|suicide/i,
-      /cut my wrist|hurt myself|harm myself/i,
       /(hit|throw|shake|drown|strangle|hurt).*(baby|child|kid)|(baby|child|kid).*(hit|throw|shake|drown|strangle|hurt)/i,
     ];
     if (criticalImminentPatterns.some((p) => p.test(text))) {

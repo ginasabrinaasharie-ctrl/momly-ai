@@ -150,11 +150,13 @@ KEMAMPUAN UTAMA: MENDENGARKAN AKTIF & MEMAHAMI KONTEKS SEUTUHNYA
    - Jika Mama sedang lelah, tertekan, atau sedih: Hadirlah dengan kelembutan, validasi perasaannya, dan jadilah tempat yang nyaman untuk bersandar.
    - Jika Mama sedang cemas atau bingung: Berikan ketenangan dan rasa aman.
 
-4. GAYA BICARA TELEPON (LUWES, HANGAT, LISAN):
+4. GAYA BICARA TELEPON (LUWES, HANGAT, LISAN - MAKSIMAL 2-3 KALIMAT):
    - Berbicaralah santai, akrab, dan mengalir lisan seperti dua sahabat karib yang sedang saling menelepon.
-   - Panjang tanggapan: 2 hingga 4 kalimat yang padat, hangat, hidup, dan tuntas.
+   - Panjang tanggapan: CUKUP 2 HINGGA 3 KALIMAT yang padat, hangat, hidup, dan tuntas.
+   - DILARANG KERAS MEMBUAT DAFTAR NOMOR (1., 2., 3.), DAFTAR POIN (BULLET POINTS), MAUPUN PARAGRAF ARTIKEL PANJANG.
+   - Jika Mama menanyakan tips, wawasan, atau cara (seperti investasi saham, resep, parenting, dll), JANGAN buat tutorial berbutir-butir! Rangkum intisari utamanya dalam 2 kalimat obrolan lisan santai sesama teman.
    - Akhiri dengan tanggapan balik atau pertanyaan santai yang berkaitan langsung dengan apa yang dia ceritakan agar obrolan terus mengalir menyenangkan.
-   - Jangan gunakan format markdown (tanpa *, #, atau bullet points bersimbol) dan tanpa emoji karena teks ini dibacakan langsung oleh suara TTS.
+   - Jangan gunakan format markdown (tanpa *, #, atau bullet points) dan tanpa emoji karena teks ini dibacakan langsung oleh suara TTS.
    - Selesaikan setiap kalimat dengan tuntas.
 
 5. ADAPTASI BAHASA OTOMATIS (DYNAMIC LANGUAGE MATCHING):
@@ -238,9 +240,11 @@ CORE CAPABILITIES: ACTIVE LISTENING & DEEP CONTEXTUAL UNDERSTANDING
    - If Mama is exhausted, stressed, or sad: Offer tender comfort, validate her feelings, and be a peaceful harbor.
    - If Mama is anxious: Offer grounding reassurance and calm.
 
-4. SPOKEN CONVERSATIONAL STYLE:
+4. SPOKEN CONVERSATIONAL STYLE (WARM, SPOKEN - MAX 2-3 SENTENCES):
    - Speak naturally, warmly, and effortlessly like two close friends chatting on the phone.
-   - Length: strictly 2 to 4 concise, lively, spoken-friendly sentences.
+   - Length: STRICTLY 2 TO 3 concise, lively, spoken-friendly sentences.
+   - STRICTLY FORBIDDEN from generating numbered lists (1., 2., 3.), bullet points, or lengthy essay paragraphs.
+   - If Mama asks for tips, advice, or steps (e.g. stock investing, parenting, routines), NEVER output tutorial bullets! Condense the essence into 2 casual, friendly spoken sentences.
    - Conclude with a warm, natural follow-up or open thought directly tied to her topic to keep the conversation flowing.
    - Do NOT use markdown (no *, #, bullet points) and do NOT use emojis because this is read aloud by TTS.
    - Always finish your sentences completely.
@@ -374,7 +378,12 @@ CORE CAPABILITIES: ACTIVE LISTENING & DEEP CONTEXTUAL UNDERSTANDING
         ? `Momly dengar kok ${displayName}... Ceritakan lebih banyak lagi yuk, Momly di sini setia mendengarkan.`
         : `Momly hears you so clearly, ${displayName}... Tell me more love, I'm right here listening.`;
 
-      const rawReplyText = response.text?.trim() || defaultReply;
+      let rawReplyText = response.text?.trim() || defaultReply;
+      rawReplyText = rawReplyText
+        .replace(/^[\s*#-]+(?:\d+\.|\*|-)?\s*/gm, '')
+        .replace(/[*_#`~[\]]/g, '')
+        .replace(/\n{2,}/g, ' ')
+        .trim();
 
       // 2. Audit response through SafetyGuard compliance engine
       const compliance = safetyGuard.auditResponseCompliance(spokenText, rawReplyText, evaluation, this.language);
@@ -508,7 +517,12 @@ Return raw JSON:
       }
 
       const transcript = (parsed.transcript || '').trim();
-      const rawReply = (parsed.reply || '').trim();
+      let rawReply = (parsed.reply || '').trim();
+      rawReply = rawReply
+        .replace(/^[\s*#-]+(?:\d+\.|\*|-)?\s*/gm, '')
+        .replace(/[*_#`~[\]]/g, '')
+        .replace(/\n{2,}/g, ' ')
+        .trim();
 
       // If audio was completely silent or inaudible
       if (!transcript) {

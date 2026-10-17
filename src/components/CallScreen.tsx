@@ -95,10 +95,10 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
         const endsWithPunctuation = /[.?!]$/.test(clean);
 
         // Natural turn-taking timing:
-        // - Titik / tanda tanya: 1.5s
-        // - isFinal (selesai frasa): 2.5s
-        // - Jeda umum: 3.5s
-        const timeoutMs = endsWithPunctuation ? 1500 : isFinal ? 2500 : 3500;
+        // - Titik / tanda tanya: 2.5s (was 1.5s)
+        // - isFinal (selesai frasa): 4.0s (was 2.5s)
+        // - Jeda umum: 4.5s (was 3.5s)
+        const timeoutMs = endsWithPunctuation ? 2500 : isFinal ? 4000 : 4500;
 
         silenceTimerRef.current = setTimeout(() => {
           handleUserFinishedSpeaking(speechTextRef.current);
@@ -530,8 +530,8 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
 
               <p className="text-[10px] text-slate-300/80 px-2 italic text-center">
                 {lang === 'id'
-                  ? 'Bicara saja langsung ya Mama, Momly otomatis menjawab saat ada jeda suara'
-                  : 'Just speak naturally, Momly automatically replies after natural pauses'}
+                  ? 'Bicara santai ya Mama, ketuk tombol "Selesai Curhat" bila sudah selesai'
+                  : 'Speak comfortably Mama, tap "Done Speaking" when you are finished'}
               </p>
 
               {micNotice && (
@@ -602,24 +602,24 @@ export const CallScreen: React.FC<CallScreenProps> = ({ onEndCall, lang, selecte
 
           {/* Live Captions */}
           {showCaptions && (
-            <div className="mt-3 p-3.5 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-md text-xs sm:text-sm text-[#EEE8FF] min-h-[72px] flex flex-col items-center justify-center text-center">
+            <div className="mt-3 p-3.5 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-md text-xs sm:text-sm text-[#EEE8FF] min-h-[72px] max-h-[160px] sm:max-h-[220px] overflow-y-auto scrollbar-thin select-text flex flex-col items-center justify-center text-center">
               {callStatus === 'listening' && latestUserText && (
-                <p className="italic text-emerald-200">"{latestUserText}"</p>
+                <p className="italic text-emerald-200 my-auto">"{latestUserText}"</p>
               )}
               {callStatus === 'thinking' && (
-                <div className="flex items-center gap-2 text-amber-200 animate-pulse">
+                <div className="flex items-center gap-2 text-amber-200 animate-pulse my-auto">
                   <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
                   <p className="italic">"{t.thinking}..."</p>
                 </div>
               )}
               {callStatus === 'speaking' && latestModelText && (
-                <p className="text-white font-medium">"{latestModelText}"</p>
+                <p className="text-white font-medium my-auto leading-relaxed">"{latestModelText}"</p>
               )}
               {!latestUserText && callStatus === 'listening' && (
-                <p className="text-[#9B8EC4] text-[11px]">{t.tapToTalk}</p>
+                <p className="text-[#9B8EC4] text-[11px] my-auto">{t.tapToTalk}</p>
               )}
               {callStatus === 'connecting' && (
-                <p className="text-rose-200 text-[11px] italic">{t.connecting}</p>
+                <p className="text-rose-200 text-[11px] italic my-auto">{t.connecting}</p>
               )}
             </div>
           )}
