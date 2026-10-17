@@ -1,0 +1,93 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (Must match request.auth.uid)
+    // Purpose: Stores personal user preferences, emotional conversation memories,
+    //          and private daily heart journal entries for Momly AI Companion.
+    //
+    // Fields:
+    //   - nickname: string (optional, 0..100 chars) - user's preferred display name
+    //   - memories: list (optional, max 100 items) - empathy conversation memory cards
+    //   - journalEntries: list (optional, max 500 items) - private heart journal entries
+    //   - updatedAt: string (optional, ISO 8601 string, max 50 chars) - client sync timestamp
+    //   - uid: string (optional, must match userId and request.auth.uid if present)
+    //
+    // Security Invariants:
+    //   - Default Deny: All collections and subcollections are denied by default.
+    //   - Least Privilege & Owner Isolation: Only the authenticated document owner
+    //     can read, create, update, or delete their document.
+    //   - Validator Function Pattern: Schema validation and size constraints are
+    //     enforced on BOTH create and update operations to eliminate the
+    //     "Update Bypass" vulnerability.
+    //   - No Mixed Content / PII Protection: User data is completely isolated.
+    //     Unauthenticated access or cross-user reads/queries are strictly forbidden.
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the request is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the authenticated user is the owner of the document path
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Validate that the document contains only allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate ISO 8601 date string format (YYYY-MM-DDTHH:MM:SS...)
+    function isValidDateString(dateStr) {
+      return dateStr is string &&
+        dateStr.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.*Z?$');
+    }
+
+    // Domain validator for user document schema, types, and resource bounds
+    function isValidUserDocument(data, userId) {
+      return hasOnlyAllowedFields(['nickname', 'memories', 'journalEntries', 'updatedAt', 'uid']) &&
+        (!('nickname' in data) || (data.nickname is string && data.nickname.size() <= 100)) &&
+        (!('memories' in data) || (data.memories is list && data.memories.size() <= 100)) &&
+        (!('journalEntries' in data) || (data.journalEntries is list && data.journalEntries.size() <= 500)) &&
+        (!('updatedAt' in data) || (isValidDateString(data.updatedAt) && data.updatedAt.size() <= 50)) &&
+        (!('uid' in data) || (data.uid is string && data.uid == userId && data.uid == request.auth.uid));
+    }
+
+    // ===============================================================
+    // Match Rules
+    // ===============================================================
+
+    // Root default deny: All unmatched collections and paths are denied by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // User profile and personal space
+    match /users/{userId} {
+      // Owner-only read access (disallows unauthenticated access and cross-user snooping)
+      allow read: if isOwner(userId);
+
+      // Owner-only create access with strict schema and size bounds
+      allow create: if isOwner(userId) && isValidUserDocument(request.resource.data, userId);
+
+      // Owner-only update access with strict schema and size bounds (prevents Update Bypass)
+      allow update: if isOwner(userId) && isValidUserDocument(request.resource.data, userId);
+
+      // Owner-only delete access (allows users to purge their personal data)
+      allow delete: if isOwner(userId);
+    }
+  }
+}
